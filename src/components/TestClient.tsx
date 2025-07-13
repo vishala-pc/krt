@@ -58,15 +58,20 @@ export default function TestClient({ test }: TestClientProps) {
     };
 
     const handleBlur = () => {
-      handleAutoSubmit('Left the test window');
+      // Small timeout to prevent false positives when browser focus flickers (e.g., alerts)
+      setTimeout(() => {
+        if (document.visibilityState === 'hidden' || !document.hasFocus()) {
+          handleAutoSubmit('Left the test window');
+        }
+      }, 100);
     };
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
-    // window.addEventListener('blur', handleBlur); // This can be too aggressive, visibilitychange is often enough.
+    window.addEventListener('blur', handleBlur);
 
     return () => {
       window.removeEventListener('visibilitychange', handleVisibilityChange);
-      // window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('blur', handleBlur);
     };
   }, [isStarted, isSubmitted, handleAutoSubmit]);
 
@@ -88,10 +93,15 @@ export default function TestClient({ test }: TestClientProps) {
 
   const startTest = async () => {
     try {
-      await document.documentElement.requestFullscreen();
+      if (document.fullscreenEnabled) {
+        await document.documentElement.requestFullscreen();
+      }
       setIsStarted(true);
     } catch (err) {
       console.error('Failed to enter fullscreen mode:', err);
+      // If fullscreen fails, we still start the test but warn the user.
+      // Some environments might not support it.
+      setIsStarted(true);
       setIsWarningVisible(true);
     }
   };
@@ -107,9 +117,9 @@ export default function TestClient({ test }: TestClientProps) {
         <AlertDialog open={isWarningVisible} onOpenChange={setIsWarningVisible}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Fullscreen Required</AlertDialogTitle>
+              <AlertDialogTitle>Fullscreen Recommended</AlertDialogTitle>
               <AlertDialogDescription>
-                Fullscreen mode is required for the test but could not be enabled automatically. Please enable it manually or allow it in your browser settings.
+                Fullscreen mode could not be enabled automatically. For the best experience, please enable it manually. The test will start anyway.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
