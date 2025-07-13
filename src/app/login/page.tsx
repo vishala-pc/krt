@@ -13,16 +13,22 @@ import type { Department } from '@/lib/types';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [department, setDepartment] = useState<Department | ''>('');
+  const [showDepartment, setShowDepartment] = useState(true);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (email === 'admin@example.com' && password === 'admin') {
+      router.push('/admin');
+      return;
+    }
+    
     if (!department) {
-        // You might want to show an error to the user here
         alert('Please select a department');
         return;
     }
-    // In a real app, you'd handle authentication here
     router.push(`/dashboard?department=${encodeURIComponent(department)}`);
   };
   
@@ -37,6 +43,18 @@ export default function LoginPage() {
     'IT',
     'General'
   ];
+  
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (newEmail.toLowerCase().startsWith('admin')) {
+      setShowDepartment(false);
+      setDepartment('');
+    } else {
+      setShowDepartment(true);
+    }
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -52,13 +70,13 @@ export default function LoginPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="user@example.com" required />
+              <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={handleEmailChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-             <div className="space-y-2">
+             {showDepartment && <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                  <Select name="department" required value={department} onValueChange={(value) => setDepartment(value as Department)}>
                     <SelectTrigger id="department">
@@ -70,7 +88,7 @@ export default function LoginPage() {
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
+            </div>}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Login</Button>
