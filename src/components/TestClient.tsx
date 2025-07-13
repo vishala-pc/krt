@@ -53,7 +53,8 @@ export default function TestClient({ test, department }: TestClientProps) {
 
     const resultData: Omit<TestResult, '_id'> = {
         userId: 'user123', // Replace with actual user ID
-        userName: userName,
+        firstName,
+        lastName,
         testId: test.id,
         testTitle: test.title,
         department: department,
@@ -79,7 +80,11 @@ export default function TestClient({ test, department }: TestClientProps) {
 
         const { id } = await response.json();
         setIsSubmitted(true);
-        const queryParams = new URLSearchParams({ department: department });
+        const queryParams = new URLSearchParams({ 
+            department: department,
+            firstName,
+            lastName
+        });
         router.push(`/results/${id}?${queryParams.toString()}`);
 
     } catch (error) {
@@ -90,7 +95,7 @@ export default function TestClient({ test, department }: TestClientProps) {
         });
         setIsSubmitting(false); // Allow user to try again
     }
-  }, [answers, isSubmitted, isSubmitting, router, test, toast, department, userName]);
+  }, [answers, isSubmitted, isSubmitting, router, test, toast, department, firstName, lastName]);
   
   const handleAutoSubmit = useCallback((reason: string) => {
     if (isSubmitted || isSubmitting) return;

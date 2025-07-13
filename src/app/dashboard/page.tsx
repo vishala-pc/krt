@@ -41,6 +41,9 @@ async function getTestsForDepartment(department: Department): Promise<Test[]> {
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const userDepartment = (searchParams.get('department') as Department) || 'General';
+  const firstName = searchParams.get('firstName') || 'Demo';
+  const lastName = searchParams.get('lastName') || 'User';
+
   const [availableTests, setAvailableTests] = useState<Test[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -81,7 +84,13 @@ export default function DashboardPage() {
 
         {availableTests.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableTests.map((test) => (
+            {availableTests.map((test) => {
+              const testLink = `/test/${test.id}?${new URLSearchParams({
+                department: userDepartment,
+                firstName,
+                lastName,
+              })}`;
+              return (
               <Card key={test.id} className="flex flex-col justify-between hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle>{test.title}</CardTitle>
@@ -101,11 +110,11 @@ export default function DashboardPage() {
                 </CardContent>
                 <CardFooter>
                   <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Link href={`/test/${test.id}?department=${userDepartment}`}>Start Test</Link>
+                    <Link href={testLink}>Start Test</Link>
                   </Button>
                 </CardFooter>
               </Card>
-            ))}
+            )})}
           </div>
         ) : (
           <Card className="mt-6">

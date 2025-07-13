@@ -34,7 +34,8 @@ export interface UserAnswer {
 export interface TestResult {
   _id: string; 
   userId: string;
-  userName: string;
+  firstName: string;
+  lastName: string;
   testId: string;
   score: number;
   totalPoints: number;

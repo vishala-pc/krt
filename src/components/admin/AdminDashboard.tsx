@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { TestResult, Department, Question } from '@/lib/types';
-import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, XCircle, Trash2 } from 'lucide-react';
+import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 
@@ -75,11 +75,14 @@ export default function AdminDashboard() {
   const filteredResults = useMemo(() => {
     if (!searchTerm) return results;
     const lowercasedFilter = searchTerm.toLowerCase();
-    return results.filter(result => 
-      (result.userName && result.userName.toLowerCase().includes(lowercasedFilter)) ||
-      (result.testTitle && result.testTitle.toLowerCase().includes(lowercasedFilter)) ||
-      (result.department && result.department.toLowerCase().includes(lowercasedFilter))
-    );
+    return results.filter(result => {
+      const fullName = `${result.firstName || ''} ${result.lastName || ''}`.toLowerCase();
+      return (
+        fullName.includes(lowercasedFilter) ||
+        (result.testTitle && result.testTitle.toLowerCase().includes(lowercasedFilter)) ||
+        (result.department && result.department.toLowerCase().includes(lowercasedFilter))
+      );
+    });
   }, [results, searchTerm]);
 
 
@@ -239,7 +242,7 @@ export default function AdminDashboard() {
             <TableBody>
               {filteredResults.map((result) => (
                 <TableRow key={result._id}>
-                  <TableCell>{result.userName || 'N/A'}</TableCell>
+                  <TableCell>{result.firstName} {result.lastName}</TableCell>
                   <TableCell>{result.testTitle}</TableCell>
                   <TableCell>{result.department}</TableCell>
                   <TableCell>{result.score}/{result.totalPoints}</TableCell>

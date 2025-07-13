@@ -47,7 +47,7 @@ async function getTest(testId: string, department: Department): Promise<Test | n
 }
 
 
-export default async function ResultsPage({ params, searchParams }: { params: { id: string }, searchParams: { department?: Department } }) {
+export default async function ResultsPage({ params, searchParams }: { params: { id: string }, searchParams: { department?: Department, firstName?: string, lastName?: string } }) {
   const result = await getResult(params.id);
   
   if (!result) {
@@ -78,9 +78,11 @@ export default async function ResultsPage({ params, searchParams }: { params: { 
   
   const dashboardLink = `/dashboard?${new URLSearchParams({
     department: department,
-    firstName: result.userName.split(' ')[0] || '',
-    lastName: result.userName.split(' ')[1] || '',
+    firstName: result.firstName || searchParams?.firstName || '',
+    lastName: result.lastName || searchParams?.lastName || '',
   }).toString()}`;
+
+  const userName = `${result.firstName} ${result.lastName}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,7 +91,7 @@ export default async function ResultsPage({ params, searchParams }: { params: { 
         <Card className="max-w-4xl mx-auto shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-headline">Test Results</CardTitle>
-            <CardDescription>Results for: {result.testTitle} <br/> Submitted by: {result.userName}</CardDescription>
+            <CardDescription>Results for: {result.testTitle} <br/> Submitted by: {userName}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center my-8">
