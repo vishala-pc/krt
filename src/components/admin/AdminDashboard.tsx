@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [results, setResults] = useState<TestResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -70,24 +71,49 @@ export default function AdminDashboard() {
   }, [results, searchTerm]);
 
 
-  const handleFileUpload = (e: React.FormEvent) => {
+  const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsUploading(true);
     const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
     const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
-
-    if (fileInput.files && fileInput.files.length > 0) {
-      // In a real app, you'd parse the Excel file here and use the form fields.
-      toast({
-        title: 'Upload Successful',
-        description: `File "${fileInput.files[0].name}" has been processed.`,
-      });
-      form.reset();
-    } else {
-      toast({
+    if (!fileInput.files || fileInput.files.length === 0) {
+       toast({
         variant: 'destructive',
         title: 'Upload Failed',
         description: 'Please select a file to upload.',
       });
+      setIsUploading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/admin/tests', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create test.');
+      }
+
+      toast({
+        title: 'Upload Successful',
+        description: `Test "${formData.get('title')}" has been created.`,
+      });
+      form.reset();
+
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Upload Failed',
+            description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        });
+    } finally {
+        setIsUploading(false);
     }
   };
 
@@ -131,34 +157,36 @@ export default function AdminDashboard() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Test Title</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Score</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Details</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredResults.map((result) => (
-              <TableRow key={result._id}>
-                <TableCell>{result.userName}</TableCell>
-                <TableCell>{result.testTitle}</TableCell>
-                <TableCell>{result.department}</TableCell>
-                <TableCell>{result.score}/{result.totalPoints}</TableCell>
-                <TableCell>{format(new Date(result.submittedAt), 'PPp')}</TableCell>
-                <TableCell>
-                  <Button asChild variant="outline" size="sm">
-                      <Link href={`/results/${result._id}`} target="_blank">View <ExternalLink className="ml-2 h-3 w-3" /></Link>
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Test Title</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Score</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Details</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredResults.map((result) => (
+                <TableRow key={result._id}>
+                  <TableCell>{result.userName}</TableCell>
+                  <TableCell>{result.testTitle}</TableCell>
+                  <TableCell>{result.department}</TableCell>
+                  <TableCell>{result.score}/{result.totalPoints}</TableCell>
+                  <TableCell>{format(new Date(result.submittedAt), 'PPp')}</TableCell>
+                  <TableCell>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/results/${result._id}`} target="_blank">View <ExternalLink className="ml-2 h-3 w-3" /></Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </>
     );
   }
@@ -189,13 +217,13 @@ export default function AdminDashboard() {
           <CardContent>
             <form onSubmit={handleFileUpload} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="testTitle">Test Title</Label>
-                <Input id="testTitle" type="text" placeholder="e.g., General Knowledge Quiz" required/>
+                <Label htmlFor="title">Test Title</Label>
+                <Input id="title" name="title" type="text" placeholder="e.g., General Knowledge Quiz" required/>
               </div>
                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  <div className="space-y-2">
                     <Label htmlFor="timeLimit">Time Limit (minutes)</Label>
-                    <Input id="timeLimit" type="number" placeholder="e.g., 30" required/>
+                    <Input id="timeLimit" name="timeLimit" type="number" placeholder="e.g., 30" required/>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="department">Department</Label>
@@ -213,11 +241,20 @@ export default function AdminDashboard() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="file">Question File (Excel)</Label>
-                <Input id="file" type="file" accept=".xlsx, .xls, .csv" required/>
-                <p className="text-sm text-muted-foreground">Columns: Question, Option A, B, C, D, Answer, Point</p>
+                <Input id="file" name="file" type="file" accept=".xlsx, .xls, .csv" required/>
+                <p className="text-sm text-muted-foreground">Columns: Question, Option A, Option B, Option C, Option D, Answer, Point</p>
               </div>
-              <Button type="submit" className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Upload className="mr-2" /> Upload & Create Test
+              <Button type="submit" disabled={isUploading} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                {isUploading ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                    </>
+                ) : (
+                    <>
+                        <Upload className="mr-2" /> Upload & Create Test
+                    </>
+                )}
               </Button>
             </form>
           </CardContent>
