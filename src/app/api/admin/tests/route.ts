@@ -5,48 +5,26 @@ import type { Test, Question, Department } from '@/lib/types';
 import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import * as xlsx from 'xlsx';
-
-// Helper function to convert buffer to array buffer
-function toArrayBuffer(buffer: Buffer) {
-  const arrayBuffer = new ArrayBuffer(buffer.length);
-  const view = new Uint8Array(arrayBuffer);
-  for (let i = 0; i < buffer.length; ++i) {
-    view[i] = buffer[i];
-  }
-  return arrayBuffer;
-}
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-    const title = formData.get('title') as string;
-    const timeLimit = formData.get('timeLimit') as string;
-    const department = formData.get('department') as Department;
+    const body = await request.json();
+    const { title, timeLimit, department, questions: questionData } = body;
     
-    if (!file || !title || !timeLimit || !department) {
-      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    if (!title || !timeLimit || !department || !questionData || !Array.isArray(questionData) || questionData.length === 0) {
+      return NextResponse.json({ message: 'Missing required test data.' }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const workbook = xlsx.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const data = xlsx.utils.sheet_to_json<any>(sheet);
-
-    const questions: Question[] = data.map((row, index) => {
-      const options = [row['Option A'], row['Option B'], row['Option C'], row['Option D']].filter(Boolean);
-      if (!row['Question'] || !row['Answer'] || !row['Point'] || options.length < 2) {
-        throw new Error(`Invalid data in row ${index + 2} of the Excel file.`);
+    const questions: Question[] = questionData.map((q: any) => {
+       if (!q.question || !q.options || !q.correctAnswer || q.points === undefined) {
+        throw new Error(`Invalid question data provided.`);
       }
       return {
         id: uuidv4(),
-        question: row['Question'],
-        options: options,
-        correctAnswer: row['Answer'],
-        points: Number(row['Point']),
+        question: q.question,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        points: Number(q.points),
       };
     });
 
@@ -69,7 +47,7 @@ export async function POST(request: Request) {
       const fileContent = await fs.readFile(testsFilePath, 'utf-8');
       existingTests = JSON.parse(fileContent);
     } catch (error) {
-      // File doesn't exist yet, which is fine
+      // File doesn't exist yet, which is fine.
     }
 
     existingTests.push(newTest);
