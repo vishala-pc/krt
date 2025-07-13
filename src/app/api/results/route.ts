@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { TestResult } from '@/lib/types';
 
 export async function POST(request: Request) {
   try {
     const result: TestResult = await request.json();
-    const client = await clientPromise;
-    const db = client.db(); 
+    const db = await getDb(); 
 
     const collection = db.collection<TestResult>('results');
     const { acknowledged, insertedId } = await collection.insertOne(result);

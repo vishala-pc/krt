@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import type { TestResult, Question } from '@/lib/types';
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { notFound } from 'next/navigation';
 
@@ -24,8 +24,7 @@ const mockQuestions: Record<string, Question[]> = {
 
 async function getResult(id: string): Promise<TestResult | null> {
   try {
-    const client = await clientPromise;
-    const db = client.db();
+    const db = await getDb();
     const collection = db.collection<TestResult>('results');
     
     if (!ObjectId.isValid(id)) {

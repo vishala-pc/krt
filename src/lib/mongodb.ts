@@ -2,13 +2,14 @@
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
+const dbName = process.env.MONGODB_DB_NAME || 'examlock'; // Default to 'examlock' if not set
 const options = {};
 
 let client;
 let clientPromise: Promise<MongoClient>;
 
 if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your Mongo URI to .env.local');
+  throw new Error('Please add your Mongo URI to .env file');
 }
 
 if (process.env.NODE_ENV === 'development') {
@@ -31,3 +32,8 @@ if (process.env.NODE_ENV === 'development') {
 // Export a module-scoped MongoClient promise. By doing this in a
 // separate module, the client can be shared across functions.
 export default clientPromise;
+
+export const getDb = async () => {
+    const client = await clientPromise;
+    return client.db(dbName);
+};
