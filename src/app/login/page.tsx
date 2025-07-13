@@ -15,8 +15,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [department, setDepartment] = useState<Department | ''>('');
-  const [showDepartment, setShowDepartment] = useState(true);
+  const [showUserDetails, setShowUserDetails] = useState(true);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,14 +27,10 @@ export default function LoginPage() {
       return;
     }
     
-    if (showDepartment && !department) {
-        alert('Please select a department');
+    if (showUserDetails && (!department || !firstName || !lastName)) {
+        alert('Please fill in all user details');
         return;
     }
-
-    const nameFromEmail = email.split('@')[0];
-    const firstName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-    const lastName = 'User'; // Default last name for login
 
     const queryParams = new URLSearchParams({
         department: department || 'General',
@@ -58,10 +56,12 @@ export default function LoginPage() {
     const newEmail = e.target.value;
     setEmail(newEmail);
     if (newEmail.toLowerCase() === 'admin@example.com') {
-      setShowDepartment(false);
+      setShowUserDetails(false);
       setDepartment('');
+      setFirstName('');
+      setLastName('');
     } else {
-      setShowDepartment(true);
+      setShowUserDetails(true);
     }
   };
 
@@ -78,6 +78,18 @@ export default function LoginPage() {
             <CardDescription>Enter your credentials to access your account.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {showUserDetails && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input id="firstName" name="firstName" type="text" placeholder="John" required value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input id="lastName" name="lastName" type="text" placeholder="Doe" required value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="user@example.com" required value={email} onChange={handleEmailChange} />
@@ -86,9 +98,9 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
-             {showDepartment && <div className="space-y-2">
+             {showUserDetails && <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                 <Select name="department" required={showDepartment} value={department} onValueChange={(value) => setDepartment(value as Department)}>
+                 <Select name="department" required={showUserDetails} value={department} onValueChange={(value) => setDepartment(value as Department)}>
                     <SelectTrigger id="department">
                         <SelectValue placeholder="Select your department" />
                     </SelectTrigger>
