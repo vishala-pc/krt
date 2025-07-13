@@ -7,15 +7,29 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SignupPage() {
   const router = useRouter();
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you'd handle registration here
-    router.push('/dashboard');
+    // In a real app, you'd handle registration here, storing the department.
+    // We'll pass it as a query param for now to simulate.
+    const department = (e.currentTarget.querySelector('[name="department"]') as HTMLInputElement)?.value || 'Python Developer';
+    router.push(`/dashboard?department=${encodeURIComponent(department)}`);
   };
+  
+  const departments = [
+    'Python Developer',
+    'R&D',
+    'Sales',
+    'Marketing',
+    'Project Coordinators',
+    'QA',
+    'Delivery Manager',
+    'IT'
+  ];
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -40,6 +54,19 @@ export default function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                 <Select name="department" required>
+                    <SelectTrigger id="department">
+                        <SelectValue placeholder="Select a department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">

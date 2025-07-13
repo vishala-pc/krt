@@ -7,15 +7,36 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Lock } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState } from 'react';
+import type { Department } from '@/lib/types';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [department, setDepartment] = useState<Department | ''>('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!department) {
+        // You might want to show an error to the user here
+        alert('Please select a department');
+        return;
+    }
     // In a real app, you'd handle authentication here
-    router.push('/dashboard');
+    router.push(`/dashboard?department=${encodeURIComponent(department)}`);
   };
+  
+  const departments: Department[] = [
+    'Python Developer',
+    'R&D',
+    'Sales',
+    'Marketing',
+    'Project Coordinators',
+    'QA',
+    'Delivery Manager',
+    'IT',
+    'General'
+  ];
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -36,6 +57,19 @@ export default function LoginPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" required />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                 <Select name="department" required value={department} onValueChange={(value) => setDepartment(value as Department)}>
+                    <SelectTrigger id="department">
+                        <SelectValue placeholder="Select your department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {departments.map((dept) => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
