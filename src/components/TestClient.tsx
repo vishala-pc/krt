@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Test, Question, UserAnswer } from '@/lib/types';
+import type { Test, Question, TestResult } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Timer, ArrowLeft, ArrowRight, ShieldAlert, CheckCircle } from 'lucide-react';
+import { Timer, ArrowLeft, ArrowRight, ShieldAlert, CheckCircle, Loader2 } from 'lucide-react';
 
 interface TestClientProps {
   test: Test;
@@ -23,30 +23,75 @@ export default function TestClient({ test }: TestClientProps) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(test.timeLimit * 60);
   const [isStarted, setIsStarted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isWarningVisible, setIsWarningVisible] = useState(false);
   const timerRef = useRef<NodeJS.Timeout>();
 
-  const handleSubmit = useCallback(() => {
-    if (isSubmitted) return;
-    setIsSubmitted(true);
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitted || isSubmitting) return;
+
+    setIsSubmitting(true);
     clearInterval(timerRef.current);
+    
+    let score = 0;
+    let totalPoints = 0;
+    const userAnswers = test.questions.map(q => {
+        totalPoints += q.points;
+        const selectedOption = answers[q.id];
+        if (selectedOption === q.correctAnswer) {
+            score += q.points;
+        }
+        return { questionId: q.id, selectedOption: selectedOption || 'Not answered' };
+    });
 
-    // In a real app, save results to the database here
-    console.log('Submitting answers:', answers);
+    const resultData: Omit<TestResult, '_id'> = {
+        userId: 'user123', // Replace with actual user ID
+        testId: test.id,
+        testTitle: test.title,
+        score,
+        totalPoints,
+        answers: userAnswers,
+        submittedAt: new Date(),
+    };
 
-    router.push(`/results/${test.id}`);
-  }, [answers, isSubmitted, router, test.id]);
+    try {
+        const response = await fetch('/api/results', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(resultData),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to save results.');
+        }
+
+        const { id } = await response.json();
+        setIsSubmitted(true);
+        router.push(`/results/${id}`);
+
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Submission Error',
+            description: error instanceof Error ? error.message : 'Could not save your test results. Please try again.',
+        });
+        setIsSubmitting(false); // Allow user to try again
+    }
+  }, [answers, isSubmitted, isSubmitting, router, test, toast]);
   
   const handleAutoSubmit = useCallback((reason: string) => {
-    if (isSubmitted) return;
+    if (isSubmitted || isSubmitting) return;
     toast({
       variant: 'destructive',
       title: 'Test Auto-Submitted',
-      description: `Reason: ${reason}. Your progress has been saved.`,
+      description: `Reason: ${reason}. Your progress is being saved.`,
     });
     handleSubmit();
-  }, [handleSubmit, isSubmitted, toast]);
+  }, [handleSubmit, isSubmitted, isSubmitting, toast]);
 
   useEffect(() => {
     if (!isStarted || isSubmitted) return;
@@ -58,7 +103,6 @@ export default function TestClient({ test }: TestClientProps) {
     };
 
     const handleBlur = () => {
-      // Small timeout to prevent false positives when browser focus flickers (e.g., alerts)
       setTimeout(() => {
         if (document.visibilityState === 'hidden' || !document.hasFocus()) {
           handleAutoSubmit('Left the test window');
@@ -99,8 +143,6 @@ export default function TestClient({ test }: TestClientProps) {
       setIsStarted(true);
     } catch (err) {
       console.error('Failed to enter fullscreen mode:', err);
-      // If fullscreen fails, we still start the test but warn the user.
-      // Some environments might not support it.
       setIsStarted(true);
       setIsWarningVisible(true);
     }
@@ -191,19 +233,29 @@ export default function TestClient({ test }: TestClientProps) {
           <Button
             variant="outline"
             onClick={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
-            disabled={currentQuestionIndex === 0}
+            disabled={currentQuestionIndex === 0 || isSubmitting}
           >
             <ArrowLeft className="mr-2" /> Previous
           </Button>
           {currentQuestionIndex < test.questions.length - 1 ? (
             <Button
               onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+              disabled={isSubmitting}
             >
               Next <ArrowRight className="ml-2" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-              Submit Test <CheckCircle className="ml-2" />
+            <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-accent hover:bg-accent/90 text-accent-foreground">
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Test <CheckCircle className="ml-2" />
+                </>
+              )}
             </Button>
           )}
         </CardFooter>

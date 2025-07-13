@@ -3,44 +3,74 @@ import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { CheckCircle, XCircle } from 'lucide-react';
-import type { TestResult, Test } from '@/lib/types';
+import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import type { TestResult, Question } from '@/lib/types';
+import clientPromise from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { notFound } from 'next/navigation';
 
-// Mock data
-const mockTest: Test = {
-  id: '1',
-  title: 'General Knowledge Quiz',
-  description: 'A fun quiz to test your general knowledge on various topics.',
-  timeLimit: 10,
-  questions: [
-    { id: 'q1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswer: 'Paris', points: 10 },
-    { id: 'q2', question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4', points: 10 },
-    { id: 'q3', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Venus'], correctAnswer: 'Mars', points: 10 },
-    { id: 'q4', question: 'Who wrote "To Kill a Mockingbird"?', options: ['Harper Lee', 'J.K. Rowling', 'Ernest Hemingway', 'Mark Twain'], correctAnswer: 'Harper Lee', points: 15 },
-    { id: 'q5', question: 'What is the largest ocean on Earth?', options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], correctAnswer: 'Pacific', points: 10 },
+// Mock data for test questions since we don't have a test store yet.
+// In a real app, this would also be fetched from the database.
+const mockQuestions: Record<string, Question[]> = {
+  '1': [
+      { id: 'q1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswer: 'Paris', points: 10 },
+      { id: 'q2', question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4', points: 10 },
+      { id: 'q3', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Venus'], correctAnswer: 'Mars', points: 10 },
+      { id: 'q4', question: 'Who wrote "To Kill a Mockingbird"?', options: ['Harper Lee', 'J.K. Rowling', 'Ernest Hemingway', 'Mark Twain'], correctAnswer: 'Harper Lee', points: 15 },
+      { id: 'q5', question: 'What is the largest ocean on Earth?', options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], correctAnswer: 'Pacific', points: 10 },
   ],
 };
 
-const mockResult: TestResult = {
-  id: 'res1',
-  testId: '1',
-  userId: 'user1',
-  score: 35,
-  totalPoints: 55,
-  submittedAt: new Date(),
-  answers: [
-    { questionId: 'q1', selectedOption: 'Paris' },
-    { questionId: 'q2', selectedOption: '4' },
-    { questionId: 'q3', selectedOption: 'Jupiter' },
-    { questionId: 'q4', selectedOption: 'Harper Lee' },
-    { questionId: 'q5', selectedOption: 'Atlantic' },
-  ],
-};
 
-export default function ResultsPage({ params }: { params: { id: string } }) {
-  // In a real app, fetch results and test data based on params.id
-  const test = mockTest;
-  const result = mockResult;
+async function getResult(id: string): Promise<TestResult | null> {
+  try {
+    const client = await clientPromise;
+    const db = client.db();
+    const collection = db.collection<TestResult>('results');
+    
+    if (!ObjectId.isValid(id)) {
+      return null;
+    }
+
+    const result = await collection.findOne({ _id: new ObjectId(id) });
+    
+    if (!result) {
+      return null;
+    }
+    
+    return JSON.parse(JSON.stringify(result)); // Serialize to plain object
+  } catch (error) {
+    console.error('Failed to fetch result:', error);
+    return null;
+  }
+}
+
+export default async function ResultsPage({ params }: { params: { id: string } }) {
+  const result = await getResult(params.id);
+
+  if (!result) {
+    return (
+       <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex items-center justify-center">
+           <Card className="max-w-2xl w-full text-center">
+                <CardHeader>
+                    <CardTitle className="flex justify-center items-center gap-2"><AlertTriangle className="text-destructive" />Result Not Found</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>The result you are looking for could not be found. It may have been moved or deleted.</p>
+                    <Button asChild className="mt-6">
+                        <Link href="/dashboard">Back to Dashboard</Link>
+                    </Button>
+                </CardContent>
+           </Card>
+        </main>
+      </div>
+    )
+  }
+
+  // Use mock questions for now
+  const questions = mockQuestions[result.testId] || [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,7 +79,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
         <Card className="max-w-4xl mx-auto shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-headline">Test Results</CardTitle>
-            <CardDescription>Results for: {test.title}</CardDescription>
+            <CardDescription>Results for: {result.testTitle}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center my-8">
@@ -58,7 +88,7 @@ export default function ResultsPage({ params }: { params: { id: string } }) {
             </div>
             <h3 className="text-xl font-semibold mb-4 text-center">Answer Breakdown</h3>
             <Accordion type="single" collapsible className="w-full">
-              {test.questions.map((question, index) => {
+              {questions.map((question, index) => {
                 const userAnswer = result.answers.find(a => a.questionId === question.id);
                 const isCorrect = userAnswer?.selectedOption === question.correctAnswer;
                 return (

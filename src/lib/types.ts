@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 export type Department = 
   | 'Python Developer'
   | 'R&D'
@@ -32,11 +34,12 @@ export interface UserAnswer {
 }
 
 export interface TestResult {
-  id: string;
+  _id?: ObjectId;
   userId: string;
   testId: string;
   score: number;
   totalPoints: number;
   answers: UserAnswer[];
   submittedAt: Date;
+  testTitle: string;
 }
