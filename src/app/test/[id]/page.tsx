@@ -1,6 +1,6 @@
 import TestClient from '@/components/TestClient';
 import type { Test, Department } from '@/lib/types';
-import { notFound, useSearchParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import fs from 'fs/promises';
 import path from 'path';
 
