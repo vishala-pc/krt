@@ -29,7 +29,13 @@ export default function LoginPage() {
         alert('Please select a department');
         return;
     }
-    router.push(`/dashboard?department=${encodeURIComponent(department)}`);
+
+    const queryParams = new URLSearchParams({
+        department: department,
+        firstName: 'Demo',
+        lastName: 'User',
+    });
+    router.push(`/dashboard?${queryParams.toString()}`);
   };
   
   const departments: Department[] = [

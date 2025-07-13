@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { Test, Question, TestResult, Department } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ interface TestClientProps {
 
 export default function TestClient({ test, department }: TestClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -28,6 +29,10 @@ export default function TestClient({ test, department }: TestClientProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isWarningVisible, setIsWarningVisible] = useState(false);
   const timerRef = useRef<NodeJS.Timeout>();
+
+  const firstName = searchParams.get('firstName') || 'Test';
+  const lastName = searchParams.get('lastName') || 'User';
+  const userName = `${firstName} ${lastName}`;
 
   const handleSubmit = useCallback(async () => {
     if (isSubmitted || isSubmitting) return;
@@ -48,6 +53,7 @@ export default function TestClient({ test, department }: TestClientProps) {
 
     const resultData: Omit<TestResult, '_id'> = {
         userId: 'user123', // Replace with actual user ID
+        userName: userName,
         testId: test.id,
         testTitle: test.title,
         department: department,
@@ -73,7 +79,8 @@ export default function TestClient({ test, department }: TestClientProps) {
 
         const { id } = await response.json();
         setIsSubmitted(true);
-        router.push(`/results/${id}`);
+        const queryParams = new URLSearchParams({ department: department });
+        router.push(`/results/${id}?${queryParams.toString()}`);
 
     } catch (error) {
         toast({
@@ -83,7 +90,7 @@ export default function TestClient({ test, department }: TestClientProps) {
         });
         setIsSubmitting(false); // Allow user to try again
     }
-  }, [answers, isSubmitted, isSubmitting, router, test, toast, department]);
+  }, [answers, isSubmitted, isSubmitting, router, test, toast, department, userName]);
   
   const handleAutoSubmit = useCallback((reason: string) => {
     if (isSubmitted || isSubmitting) return;
@@ -178,6 +185,7 @@ export default function TestClient({ test, department }: TestClientProps) {
               <CardDescription>{test.description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+               <p className="text-muted-foreground">Welcome, {userName}</p>
               <div className="flex items-center justify-center gap-2 text-primary p-4 border-primary/20 border-2 rounded-lg bg-primary/5">
                 <ShieldAlert className="w-8 h-8"/>
                 <p className="text-left font-medium">

@@ -47,7 +47,7 @@ async function getTest(testId: string, department: Department): Promise<Test | n
 }
 
 
-export default async function ResultsPage({ params }: { params: { id: string } }) {
+export default async function ResultsPage({ params, searchParams }: { params: { id: string }, searchParams: { department?: Department } }) {
   const result = await getResult(params.id);
   
   if (!result) {
@@ -71,11 +71,16 @@ export default async function ResultsPage({ params }: { params: { id: string } }
     )
   }
 
-  // We need to know the department to find the right test file.
-  // This is a limitation of not having a full user session.
-  // We'll assume 'General' if no department is found on the result object.
-  const test = await getTest(result.testId, result.department || 'General');
+  // Use department from result, fallback to searchParam, then to 'General'
+  const department = result.department || searchParams?.department || 'General';
+  const test = await getTest(result.testId, department);
   const questions = test?.questions || [];
+  
+  const dashboardLink = `/dashboard?${new URLSearchParams({
+    department: department,
+    firstName: result.userName.split(' ')[0] || '',
+    lastName: result.userName.split(' ')[1] || '',
+  }).toString()}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +89,7 @@ export default async function ResultsPage({ params }: { params: { id: string } }
         <Card className="max-w-4xl mx-auto shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-headline">Test Results</CardTitle>
-            <CardDescription>Results for: {result.testTitle}</CardDescription>
+            <CardDescription>Results for: {result.testTitle} <br/> Submitted by: {result.userName}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center my-8">
@@ -120,7 +125,7 @@ export default async function ResultsPage({ params }: { params: { id: string } }
             </Accordion>
             <div className="mt-8 text-center">
               <Button asChild>
-                <Link href="/dashboard">Back to Dashboard</Link>
+                <Link href={dashboardLink}>Back to Dashboard</Link>
               </Button>
             </div>
           </CardContent>

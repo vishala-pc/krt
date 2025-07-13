@@ -32,8 +32,9 @@ export interface UserAnswer {
 }
 
 export interface TestResult {
-  _id: string; // Changed from ObjectId to string for simplicity with JSON files
+  _id: string; 
   userId: string;
+  userName: string;
   testId: string;
   score: number;
   totalPoints: number;

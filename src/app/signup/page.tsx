@@ -8,19 +8,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserPlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState } from 'react';
+import type { Department } from '@/lib/types';
+
 
 export default function SignupPage() {
   const router = useRouter();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app, you'd handle registration here, storing the department.
-    // We'll pass it as a query param for now to simulate.
-    const department = (e.currentTarget.querySelector('[name="department"]') as HTMLInputElement)?.value || 'Python Developer';
-    router.push(`/dashboard?department=${encodeURIComponent(department)}`);
+    const formData = new FormData(e.currentTarget);
+    const department = formData.get('department') as Department || 'General';
+    const firstName = formData.get('firstName') as string;
+    const lastName = formData.get('lastName') as string;
+
+    const queryParams = new URLSearchParams({
+        department,
+        firstName,
+        lastName,
+    });
+    
+    router.push(`/dashboard?${queryParams.toString()}`);
   };
   
-  const departments = [
+  const departments: Department[] = [
     'Python Developer',
     'R&D',
     'Sales',
@@ -28,7 +39,8 @@ export default function SignupPage() {
     'Project Coordinators',
     'QA',
     'Delivery Manager',
-    'IT'
+    'IT',
+    'General'
   ];
 
   return (
@@ -43,21 +55,27 @@ export default function SignupPage() {
             <CardDescription>Join ExamLock to start your assessments.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" type="text" placeholder="your_username" required />
+             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input id="firstName" name="firstName" type="text" placeholder="John" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input id="lastName" name="lastName" type="text" placeholder="Doe" required />
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="user@example.com" required />
+              <Input id="email" name="email" type="email" placeholder="user@example.com" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+              <Input id="password" name="password" type="password" required />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                 <Select name="department" required>
+                 <Select name="department" required defaultValue="General">
                     <SelectTrigger id="department">
                         <SelectValue placeholder="Select a department" />
                     </SelectTrigger>
