@@ -1,10 +1,67 @@
 [
-    {
-        "id": "4",
-        "title": "Python for Beginners",
-        "description": "A test for new python developers.",
-        "timeLimit": 20,
-        "questions": [],
-        "department": "Python Developer"
-    }
+  {
+    "id": "4",
+    "title": "Python for Beginners",
+    "description": "A test for new python developers.",
+    "timeLimit": 20,
+    "questions": [],
+    "department": "Python Developer"
+  },
+  {
+    "id": "e19281b9-f2dc-40b2-90ca-31d611ddb27c",
+    "title": "KRT 1",
+    "description": "A new test for Python Developer.",
+    "timeLimit": 5,
+    "department": "Python Developer",
+    "questions": [
+      {
+        "id": "074acf30-aaeb-4e57-87e0-2c2cdfc31218",
+        "question": "Which architectural choice best explains why mobile apps prefer JSON APIs over HTML responses?",
+        "options": [
+          "To simplify UI rendering by offloading it to the backend",
+          "To reduce network load and allow client-side control",
+          "Because HTML parsing is not supported in mobile environments",
+          "Because API responses are automatically encrypted in mobile apps"
+        ],
+        "correctAnswer": "To reduce network load and allow client-side control",
+        "points": 1
+      },
+      {
+        "id": "171862e2-cd84-4976-a716-5118a060a32c",
+        "question": "Which tool allows interception of HTTPS traffic from mobile apps by acting as a proxy with certificate installation?",
+        "options": [
+          "Fiddler",
+          "Postman",
+          "cURL",
+          "Android Studio Profiler"
+        ],
+        "correctAnswer": "Fiddler",
+        "points": 1
+      },
+      {
+        "id": "bbc17eaf-fd73-46b1-95b1-c39fe6a0ce0c",
+        "question": "Which scenario most likely indicates the use of session tokens in API communication?",
+        "options": [
+          "Every request contains a unique URL parameter",
+          "The same Authorization header appears across multiple requests",
+          "Each request sends a new device fingerprint",
+          "API calls only succeed when cookies are present"
+        ],
+        "correctAnswer": "The same Authorization header appears across multiple requests",
+        "points": 1
+      },
+      {
+        "id": "6812bb18-09a3-4b51-89e7-bfa1c53a1d2d",
+        "question": "You're replaying a captured API request, but the server returns 401 Unauthorized despite identical headers. What’s the most probable reason?",
+        "options": [
+          "The endpoint accepts only GET requests",
+          "The session token has expired or is single-use",
+          "The request must include a browser User-Agent",
+          "The IP address is blacklisted"
+        ],
+        "correctAnswer": "The session token has expired or is single-use",
+        "points": 1
+      }
+    ]
+  }
 ]

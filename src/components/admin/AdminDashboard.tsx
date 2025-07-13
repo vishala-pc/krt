@@ -76,9 +76,9 @@ export default function AdminDashboard() {
     if (!searchTerm) return results;
     const lowercasedFilter = searchTerm.toLowerCase();
     return results.filter(result => 
-      result.userName.toLowerCase().includes(lowercasedFilter) ||
-      result.testTitle.toLowerCase().includes(lowercasedFilter) ||
-      result.department.toLowerCase().includes(lowercasedFilter)
+      (result.userName && result.userName.toLowerCase().includes(lowercasedFilter)) ||
+      (result.testTitle && result.testTitle.toLowerCase().includes(lowercasedFilter)) ||
+      (result.department && result.department.toLowerCase().includes(lowercasedFilter))
     );
   }, [results, searchTerm]);
 
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
             <TableBody>
               {filteredResults.map((result) => (
                 <TableRow key={result._id}>
-                  <TableCell>{result.userName}</TableCell>
+                  <TableCell>{result.userName || 'N/A'}</TableCell>
                   <TableCell>{result.testTitle}</TableCell>
                   <TableCell>{result.department}</TableCell>
                   <TableCell>{result.score}/{result.totalPoints}</TableCell>
