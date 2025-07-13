@@ -1,0 +1,10 @@
+[
+    {
+        "id": "5",
+        "title": "Sales Strategy",
+        "description": "A test on modern sales techniques.",
+        "timeLimit": 15,
+        "questions": [],
+        "department": "Sales"
+    }
+]

@@ -4,49 +4,52 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import type { TestResult, Question } from '@/lib/types';
-import { getDb } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
-import { notFound } from 'next/navigation';
-
-// Mock data for test questions since we don't have a test store yet.
-// In a real app, this would also be fetched from the database.
-const mockQuestions: Record<string, Question[]> = {
-  '1': [
-      { id: 'q1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswer: 'Paris', points: 10 },
-      { id: 'q2', question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4', points: 10 },
-      { id: 'q3', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Venus'], correctAnswer: 'Mars', points: 10 },
-      { id: 'q4', question: 'Who wrote "To Kill a Mockingbird"?', options: ['Harper Lee', 'J.K. Rowling', 'Ernest Hemingway', 'Mark Twain'], correctAnswer: 'Harper Lee', points: 15 },
-      { id: 'q5', question: 'What is the largest ocean on Earth?', options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], correctAnswer: 'Pacific', points: 10 },
-  ],
-};
-
+import type { TestResult, Question, Test, Department } from '@/lib/types';
+import fs from 'fs/promises';
+import path from 'path';
 
 async function getResult(id: string): Promise<TestResult | null> {
   try {
-    const db = await getDb();
-    const collection = db.collection<TestResult>('results');
-    
-    if (!ObjectId.isValid(id)) {
-      return null;
-    }
-
-    const result = await collection.findOne({ _id: new ObjectId(id) });
-    
-    if (!result) {
-      return null;
-    }
-    
-    return JSON.parse(JSON.stringify(result)); // Serialize to plain object
+    const filePath = path.join(process.cwd(), 'data', 'results', `${id}.json`);
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    const result = JSON.parse(fileContent);
+    return result;
   } catch (error) {
-    console.error('Failed to fetch result:', error);
+    console.error(`Failed to fetch result for id: ${id}`, error);
     return null;
   }
 }
 
+async function getTest(testId: string, department: Department): Promise<Test | null> {
+  try {
+    const departmentFilePath = path.join(process.cwd(), 'public', 'data', `${department}`, 'tests.json');
+    const generalFilePath = path.join(process.cwd(), 'public', 'data', 'General', 'tests.json');
+
+    let allTests: Test[] = [];
+
+    try {
+        const generalFile = await fs.readFile(generalFilePath, 'utf-8');
+        allTests.push(...JSON.parse(generalFile));
+    } catch {}
+
+    if (department !== 'General') {
+        try {
+            const departmentFile = await fs.readFile(departmentFilePath, 'utf-8');
+            allTests.push(...JSON.parse(departmentFile));
+        } catch {}
+    }
+    
+    return allTests.find(t => t.id === testId) || null;
+  } catch (error) {
+    console.error(`Failed to fetch test data for testId: ${testId}`, error);
+    return null;
+  }
+}
+
+
 export default async function ResultsPage({ params }: { params: { id: string } }) {
   const result = await getResult(params.id);
-
+  
   if (!result) {
     return (
        <div className="min-h-screen bg-background">
@@ -57,7 +60,7 @@ export default async function ResultsPage({ params }: { params: { id: string } }
                     <CardTitle className="flex justify-center items-center gap-2"><AlertTriangle className="text-destructive" />Result Not Found</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p>The result you are looking for could not be found. It may have been moved or deleted.</p>
+                    <p>The result you are looking for could not be found. It may have been moved, deleted, or never existed.</p>
                     <Button asChild className="mt-6">
                         <Link href="/dashboard">Back to Dashboard</Link>
                     </Button>
@@ -68,8 +71,11 @@ export default async function ResultsPage({ params }: { params: { id: string } }
     )
   }
 
-  // Use mock questions for now
-  const questions = mockQuestions[result.testId] || [];
+  // We need to know the department to find the right test file.
+  // This is a limitation of not having a full user session.
+  // We'll assume 'General' if no department is found on the result object.
+  const test = await getTest(result.testId, result.department || 'General');
+  const questions = test?.questions || [];
 
   return (
     <div className="min-h-screen bg-background">

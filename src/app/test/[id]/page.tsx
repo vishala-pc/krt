@@ -1,78 +1,50 @@
 import TestClient from '@/components/TestClient';
-import type { Test } from '@/lib/types';
-import { notFound } from 'next/navigation';
+import type { Test, Department } from '@/lib/types';
+import { notFound, useSearchParams } from 'next/navigation';
+import fs from 'fs/promises';
+import path from 'path';
 
-// Mock data for a single test
-const mockTests: Test[] = [
-  {
-    id: '1',
-    title: 'General Knowledge Quiz',
-    description: 'A fun quiz to test your general knowledge on various topics.',
-    timeLimit: 10,
-    questions: [
-      { id: 'q1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswer: 'Paris', points: 10 },
-      { id: 'q2', question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4', points: 10 },
-      { id: 'q3', question: 'Which planet is known as the Red Planet?', options: ['Earth', 'Mars', 'Jupiter', 'Venus'], correctAnswer: 'Mars', points: 10 },
-      { id: 'q4', question: 'Who wrote "To Kill a Mockingbird"?', options: ['Harper Lee', 'J.K. Rowling', 'Ernest Hemingway', 'Mark Twain'], correctAnswer: 'Harper Lee', points: 15 },
-      { id: 'q5', question: 'What is the largest ocean on Earth?', options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'], correctAnswer: 'Pacific', points: 10 },
-    ],
-    department: 'General',
-  },
-  {
-    id: '2',
-    title: 'React Fundamentals',
-    description: 'Test your basic understanding of React hooks, components, and state.',
-    timeLimit: 15,
-    questions: [],
-    department: 'R&D',
-  },
-  {
-    id: '3',
-    title: 'Advanced JavaScript Concepts',
-    description: 'A challenging test covering closures, prototypes, and async patterns.',
-    timeLimit: 20,
-    questions: [],
-    department: 'R&D',
-  },
-    {
-    id: '4',
-    title: 'Python for Beginners',
-    description: 'A test for new python developers.',
-    timeLimit: 20,
-    questions: [],
-    department: 'Python Developer',
-  },
-  {
-    id: '5',
-    title: 'Sales Strategy',
-    description: 'A test on modern sales techniques.',
-    timeLimit: 15,
-    questions: [],
-    department: 'Sales',
-  },
-  {
-    id: '6',
-    title: 'Marketing 101',
-    description: 'Basics of marketing and branding.',
-    timeLimit: 10,
-    questions: [],
-    department: 'Marketing',
-  },
-];
+// This function now reads from the local filesystem on the server
+const getTestById = async (id: string, department: Department): Promise<Test | null> => {
+  try {
+    const generalFilePath = path.join(process.cwd(), 'public', 'data', 'General', 'tests.json');
+    
+    let allTests: Test[] = [];
 
+    // Load general tests
+    try {
+        const generalFile = await fs.readFile(generalFilePath, 'utf-8');
+        allTests.push(...JSON.parse(generalFile));
+    } catch (e) {
+        console.warn("Could not load general tests, file might be missing.");
+    }
 
-const getTestById = async (id: string): Promise<Test | null> => {
-  // In a real app, you would fetch this from your database (e.g., Firestore)
-  const test = mockTests.find(t => t.id === id);
-  return test || null;
+    // Load department-specific tests if not General
+    if (department !== 'General') {
+        const departmentFilePath = path.join(process.cwd(), 'public', 'data', `${department}`, 'tests.json');
+        try {
+            const departmentFile = await fs.readFile(departmentFilePath, 'utf-8');
+            allTests.push(...JSON.parse(departmentFile));
+        } catch (e) {
+            console.warn(`Could not load tests for ${department}, file might be missing.`);
+        }
+    }
+
+    const test = allTests.find(t => t.id === id);
+    return test || null;
+  } catch (error) {
+    console.error("Error reading test files:", error);
+    return null;
+  }
 };
 
-export default async function TestPage({ params }: { params: { id: string } }) {
-  const test = await getTestById(params.id);
+export default async function TestPage({ params, searchParams }: { params: { id: string }, searchParams: { department: Department } }) {
+  const department = searchParams.department || 'General';
+  const test = await getTestById(params.id, department);
 
   if (!test) {
     notFound();
   }
 
-  return <TestClient test={test} />;
+  return <TestClient test={test} department={department} />;
 }

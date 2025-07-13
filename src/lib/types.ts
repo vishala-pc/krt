@@ -1,5 +1,3 @@
-import { ObjectId } from "mongodb";
-
 export type Department = 
   | 'Python Developer'
   | 'R&D'
@@ -34,7 +32,7 @@ export interface UserAnswer {
 }
 
 export interface TestResult {
-  _id?: ObjectId;
+  _id: string; // Changed from ObjectId to string for simplicity with JSON files
   userId: string;
   testId: string;
   score: number;
@@ -42,4 +40,5 @@ export interface TestResult {
   answers: UserAnswer[];
   submittedAt: Date;
   testTitle: string;
+  department: Department;
 }

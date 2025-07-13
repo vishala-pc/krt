@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Test, Question, TestResult } from '@/lib/types';
+import type { Test, Question, TestResult, Department } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -14,9 +14,10 @@ import { Timer, ArrowLeft, ArrowRight, ShieldAlert, CheckCircle, Loader2 } from 
 
 interface TestClientProps {
   test: Test;
+  department: Department;
 }
 
-export default function TestClient({ test }: TestClientProps) {
+export default function TestClient({ test, department }: TestClientProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -49,6 +50,7 @@ export default function TestClient({ test }: TestClientProps) {
         userId: 'user123', // Replace with actual user ID
         testId: test.id,
         testTitle: test.title,
+        department: department,
         score,
         totalPoints,
         answers: userAnswers,
@@ -81,7 +83,7 @@ export default function TestClient({ test }: TestClientProps) {
         });
         setIsSubmitting(false); // Allow user to try again
     }
-  }, [answers, isSubmitted, isSubmitting, router, test, toast]);
+  }, [answers, isSubmitted, isSubmitting, router, test, toast, department]);
   
   const handleAutoSubmit = useCallback((reason: string) => {
     if (isSubmitted || isSubmitting) return;

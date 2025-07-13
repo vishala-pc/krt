@@ -6,70 +6,71 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Header from '@/components/Header';
 import type { Test, Department } from '@/lib/types';
 import { FileText, Clock, AlertCircle } from 'lucide-react';
-import { useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
-// Mock data for available tests
-const mockTests: Test[] = [
-  {
-    id: '1',
-    title: 'General Knowledge Quiz',
-    description: 'A fun quiz to test your general knowledge on various topics.',
-    timeLimit: 10,
-    questions: [
-      { id: 'q1', question: 'What is the capital of France?', options: ['Berlin', 'Madrid', 'Paris', 'Rome'], correctAnswer: 'Paris', points: 10 },
-      { id: 'q2', question: 'What is 2 + 2?', options: ['3', '4', '5', '6'], correctAnswer: '4', points: 10 },
-    ],
-    department: 'General',
-  },
-  {
-    id: '2',
-    title: 'React Fundamentals',
-    description: 'Test your basic understanding of React hooks, components, and state.',
-    timeLimit: 15,
-    questions: [],
-    department: 'R&D',
-  },
-  {
-    id: '3',
-    title: 'Advanced JavaScript Concepts',
-    description: 'A challenging test covering closures, prototypes, and async patterns.',
-    timeLimit: 20,
-    questions: [],
-    department: 'R&D',
-  },
-  {
-    id: '4',
-    title: 'Python for Beginners',
-    description: 'A test for new python developers.',
-    timeLimit: 20,
-    questions: [],
-    department: 'Python Developer',
-  },
-  {
-    id: '5',
-    title: 'Sales Strategy',
-    description: 'A test on modern sales techniques.',
-    timeLimit: 15,
-    questions: [],
-    department: 'Sales',
-  },
-  {
-    id: '6',
-    title: 'Marketing 101',
-    description: 'Basics of marketing and branding.',
-    timeLimit: 10,
-    questions: [],
-    department: 'Marketing',
-  },
-];
+// This component now fetches tests from a JSON file on the client side for simplicity
+async function getTestsForDepartment(department: Department): Promise<Test[]> {
+    try {
+        const generalRes = await fetch('/data/General/tests.json');
+        const generalTests: Test[] = await generalRes.json();
+
+        if (department === 'General') {
+            return generalTests;
+        }
+
+        const departmentRes = await fetch(`/data/${encodeURIComponent(department)}/tests.json`);
+        if (!departmentRes.ok) {
+            return generalTests; // Fallback to general if department file doesn't exist
+        }
+        const departmentTests: Test[] = await departmentRes.json();
+        
+        return [...generalTests, ...departmentTests];
+    } catch (error) {
+        console.error("Failed to fetch tests:", error);
+        // Attempt to fetch general tests as a fallback
+        try {
+            const res = await fetch('/data/General/tests.json');
+            return await res.json();
+        } catch {
+            return [];
+        }
+    }
+}
+
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
   const userDepartment = (searchParams.get('department') as Department) || 'General';
+  const [availableTests, setAvailableTests] = useState<Test[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const availableTests = useMemo(() => {
-    return mockTests.filter(test => test.department === userDepartment || test.department === 'General');
+  useEffect(() => {
+    async function loadTests() {
+      setIsLoading(true);
+      const tests = await getTestsForDepartment(userDepartment);
+      setAvailableTests(tests);
+      setIsLoading(false);
+    }
+    loadTests();
   }, [userDepartment]);
+
+
+  if (isLoading) {
+    return (
+        <div className="min-h-screen bg-background">
+            <Header />
+            <main className="container mx-auto px-4 py-8">
+                <h1 className="text-3xl font-bold mb-1 font-headline">Available Tests</h1>
+                <p className="text-muted-foreground mb-6">Loading tests for the <strong>{userDepartment}</strong> department...</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(3)].map((_, i) => (
+                        <Card key={i}><CardHeader><CardTitle>Loading...</CardTitle></CardHeader><CardContent><p>Please wait.</p></CardContent></Card>
+                    ))}
+                </div>
+            </main>
+        </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -100,7 +101,7 @@ export default function DashboardPage() {
                 </CardContent>
                 <CardFooter>
                   <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Link href={`/test/${test.id}`}>Start Test</Link>
+                    <Link href={`/test/${test.id}?department=${userDepartment}`}>Start Test</Link>
                   </Button>
                 </CardFooter>
               </Card>

@@ -1,0 +1,21 @@
+[
+  {
+    "id": "2",
+    "title": "React Fundamentals",
+    "description": "Test your basic understanding of React hooks, components, and state.",
+    "timeLimit": 15,
+    "questions": [
+        { "id": "rf1", "question": "What is JSX?", "options": ["A JavaScript syntax extension", "A templating engine", "A CSS preprocessor", "A database query language"], "correctAnswer": "A JavaScript syntax extension", "points": 10 },
+        { "id": "rf2", "question": "Which hook is used to manage state in a functional component?", "options": ["useEffect", "useState", "useContext", "useReducer"], "correctAnswer": "useState", "points": 10 }
+    ],
+    "department": "R&amp;D"
+  },
+  {
+    "id": "3",
+    "title": "Advanced JavaScript Concepts",
+    "description": "A challenging test covering closures, prototypes, and async patterns.",
+    "timeLimit": 20,
+    "questions": [],
+    "department": "R&amp;D"
+  }
+]

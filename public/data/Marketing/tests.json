@@ -1,0 +1,10 @@
+[
+    {
+        "id": "6",
+        "title": "Marketing 101",
+        "description": "Basics of marketing and branding.",
+        "timeLimit": 10,
+        "questions": [],
+        "department": "Marketing"
+    }
+]
