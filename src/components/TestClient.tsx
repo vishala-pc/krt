@@ -30,7 +30,7 @@ export default function TestClient({ test, department }: TestClientProps) {
   const [isWarningVisible, setIsWarningVisible] = useState(false);
   const timerRef = useRef<NodeJS.Timeout>();
 
-  const firstName = searchParams.get('firstName') || 'Test';
+  const firstName = searchParams.get('firstName') || 'Demo';
   const lastName = searchParams.get('lastName') || 'User';
   const userName = `${firstName} ${lastName}`;
 

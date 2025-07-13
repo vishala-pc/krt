@@ -71,18 +71,20 @@ export default async function ResultsPage({ params, searchParams }: { params: { 
     )
   }
 
-  // Use department from result, fallback to searchParam, then to 'General'
   const department = result.department || searchParams?.department || 'General';
+  const firstName = result.firstName || searchParams?.firstName || 'Demo';
+  const lastName = result.lastName || searchParams?.lastName || 'User';
+
   const test = await getTest(result.testId, department);
   const questions = test?.questions || [];
   
   const dashboardLink = `/dashboard?${new URLSearchParams({
-    department: department,
-    firstName: result.firstName || searchParams?.firstName || '',
-    lastName: result.lastName || searchParams?.lastName || '',
+    department,
+    firstName,
+    lastName,
   }).toString()}`;
 
-  const userName = `${result.firstName} ${result.lastName}`;
+  const userName = `${firstName} ${lastName}`;
 
   return (
     <div className="min-h-screen bg-background">

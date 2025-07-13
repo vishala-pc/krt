@@ -25,15 +25,19 @@ export default function LoginPage() {
       return;
     }
     
-    if (!department) {
+    if (showDepartment && !department) {
         alert('Please select a department');
         return;
     }
 
+    const nameFromEmail = email.split('@')[0];
+    const firstName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+    const lastName = 'User'; // Default last name for login
+
     const queryParams = new URLSearchParams({
-        department: department,
-        firstName: 'Demo',
-        lastName: 'User',
+        department: department || 'General',
+        firstName,
+        lastName,
     });
     router.push(`/dashboard?${queryParams.toString()}`);
   };
@@ -53,7 +57,7 @@ export default function LoginPage() {
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     setEmail(newEmail);
-    if (newEmail.toLowerCase().startsWith('admin')) {
+    if (newEmail.toLowerCase() === 'admin@example.com') {
       setShowDepartment(false);
       setDepartment('');
     } else {
@@ -84,7 +88,7 @@ export default function LoginPage() {
             </div>
              {showDepartment && <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
-                 <Select name="department" required value={department} onValueChange={(value) => setDepartment(value as Department)}>
+                 <Select name="department" required={showDepartment} value={department} onValueChange={(value) => setDepartment(value as Department)}>
                     <SelectTrigger id="department">
                         <SelectValue placeholder="Select your department" />
                     </SelectTrigger>
