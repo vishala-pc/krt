@@ -1,0 +1,32 @@
+{
+  "userId": "user123",
+  "testId": "1",
+  "testTitle": "General Knowledge Quiz",
+  "department": "General",
+  "score": 0,
+  "totalPoints": 55,
+  "answers": [
+    {
+      "questionId": "q1",
+      "selectedOption": "Rome"
+    },
+    {
+      "questionId": "q2",
+      "selectedOption": "Not answered"
+    },
+    {
+      "questionId": "q3",
+      "selectedOption": "Not answered"
+    },
+    {
+      "questionId": "q4",
+      "selectedOption": "Not answered"
+    },
+    {
+      "questionId": "q5",
+      "selectedOption": "Not answered"
+    }
+  ],
+  "submittedAt": "2025-07-13T09:27:06.295Z",
+  "_id": "c3c81880-0614-4628-b93d-a38abd0d0915"
+}

@@ -1,0 +1,32 @@
+{
+  "userId": "user123",
+  "testId": "1",
+  "testTitle": "General Knowledge Quiz",
+  "department": "Python Developer",
+  "score": 10,
+  "totalPoints": 55,
+  "answers": [
+    {
+      "questionId": "q1",
+      "selectedOption": "Madrid"
+    },
+    {
+      "questionId": "q2",
+      "selectedOption": "4"
+    },
+    {
+      "questionId": "q3",
+      "selectedOption": "Not answered"
+    },
+    {
+      "questionId": "q4",
+      "selectedOption": "Not answered"
+    },
+    {
+      "questionId": "q5",
+      "selectedOption": "Not answered"
+    }
+  ],
+  "submittedAt": "2025-07-13T09:28:46.732Z",
+  "_id": "cef09ae8-1bc2-4b8a-aa2d-22429483fa24"
+}

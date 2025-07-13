@@ -30,8 +30,11 @@ export default function Home() {
           </div>
         </CardContent>
       </Card>
-      <footer className="mt-8 text-sm text-muted-foreground">
+      <footer className="mt-8 text-sm text-muted-foreground text-center">
         <p>Built for focus and integrity.</p>
+        <Link href="/admin" className="underline hover:text-primary mt-2 inline-block">
+          Admin Panel
+        </Link>
       </footer>
     </div>
   );
