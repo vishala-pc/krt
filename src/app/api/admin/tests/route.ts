@@ -6,6 +6,37 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+// GET all tests
+export async function GET() {
+  const testsByDepartment: Record<string, Test[]> = {};
+  const departmentsDir = path.join(process.cwd(), 'public', 'data');
+
+  try {
+    const departmentFolders = await fs.readdir(departmentsDir, { withFileTypes: true });
+
+    for (const folder of departmentFolders) {
+      if (folder.isDirectory()) {
+        const departmentName = folder.name;
+        const testsFilePath = path.join(departmentsDir, departmentName, 'tests.json');
+        try {
+          const fileContent = await fs.readFile(testsFilePath, 'utf-8');
+          testsByDepartment[departmentName] = JSON.parse(fileContent);
+        } catch (error) {
+          // File might not exist, which is fine.
+          testsByDepartment[departmentName] = [];
+        }
+      }
+    }
+    return NextResponse.json(testsByDepartment);
+  } catch (error) {
+    console.error('API Error (get all tests):', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({ message: 'Failed to fetch tests', error: errorMessage }, { status: 500 });
+  }
+}
+
+
+// POST a new test
 export async function POST(request: Request) {
   try {
     const body = await request.json();
