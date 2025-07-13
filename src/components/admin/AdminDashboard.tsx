@@ -249,7 +249,7 @@ export default function AdminDashboard() {
                   <TableCell>{format(new Date(result.submittedAt), 'PPp')}</TableCell>
                   <TableCell>
                     <Button asChild variant="outline" size="sm">
-                        <Link href={`/results/${result._id}`} target="_blank">View <ExternalLink className="ml-2 h-3 w-3" /></Link>
+                        <Link href={`/results/${result._id}?department=${result.department}&firstName=${result.firstName}&lastName=${result.lastName}`} target="_blank">View <ExternalLink className="ml-2 h-3 w-3" /></Link>
                     </Button>
                   </TableCell>
                 </TableRow>
