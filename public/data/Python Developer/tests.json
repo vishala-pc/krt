@@ -1,13 +1,5 @@
 [
   {
-    "id": "4",
-    "title": "Python for Beginners",
-    "description": "A test for new python developers.",
-    "timeLimit": 20,
-    "questions": [],
-    "department": "Python Developer"
-  },
-  {
     "id": "e19281b9-f2dc-40b2-90ca-31d611ddb27c",
     "title": "KRT 1",
     "description": "A new test for Python Developer.",

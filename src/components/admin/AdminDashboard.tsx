@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { TestResult, Department, Question, Test } from '@/lib/types';
-import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, Trash2, FileCog } from 'lucide-react';
+import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, Trash2, FileCog, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -24,6 +24,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+interface UserSummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+  department: Department;
+  testsTaken: number;
+}
 
 export default function AdminDashboard() {
   const { toast } = useToast();
@@ -96,6 +103,26 @@ export default function AdminDashboard() {
     }
     loadData();
   }, [toast]);
+  
+  const userSummaries = useMemo<UserSummary[]>(() => {
+    const userMap = new Map<string, UserSummary>();
+    results.forEach(result => {
+        const userId = `${result.firstName}-${result.lastName}`.toLowerCase();
+        if (userMap.has(userId)) {
+            const existingUser = userMap.get(userId)!;
+            existingUser.testsTaken += 1;
+        } else {
+            userMap.set(userId, {
+                id: userId,
+                firstName: result.firstName,
+                lastName: result.lastName,
+                department: result.department,
+                testsTaken: 1,
+            });
+        }
+    });
+    return Array.from(userMap.values());
+  }, [results]);
 
   const filteredResults = useMemo(() => {
     if (!searchTerm) return results;
@@ -256,14 +283,45 @@ export default function AdminDashboard() {
       </div>
     );
   };
+  
+  const renderUsersContent = () => {
+    if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="mr-2 h-8 w-8 animate-spin" /><span>Loading users...</span></div>;
+    if (error) return <div className="flex flex-col items-center justify-center p-8 text-destructive"><AlertCircle className="h-8 w-8 mb-2" /><p>Error loading user data: {error}</p></div>;
+    if (userSummaries.length === 0) return <div className="flex flex-col items-center justify-center p-8 text-muted-foreground"><Users className="h-8 w-8 mb-2" /><p>No users have taken any tests yet.</p></div>;
+    
+    return (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Department</TableHead>
+              <TableHead className="text-right">Tests Taken</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {userSummaries.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.firstName} {user.lastName}</TableCell>
+                <TableCell>{user.department}</TableCell>
+                <TableCell className="text-right">{user.testsTaken}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
 
   return (
     <>
     <Tabs defaultValue="results" className="w-full">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-4">
         <TabsTrigger value="results"><ListOrdered className="mr-2" /> View Results</TabsTrigger>
         <TabsTrigger value="create"><Upload className="mr-2" /> Create Test</TabsTrigger>
         <TabsTrigger value="manage"><FileCog className="mr-2" /> Manage Tests</TabsTrigger>
+        <TabsTrigger value="users"><Users className="mr-2" /> Users</TabsTrigger>
       </TabsList>
       <TabsContent value="results">
         <Card>
@@ -304,6 +362,12 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader><CardTitle>Manage Existing Tests (KRTs)</CardTitle><CardDescription>View and delete tests that have been created for each department.</CardDescription></CardHeader>
           <CardContent>{renderManageTestsContent()}</CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="users">
+        <Card>
+          <CardHeader><CardTitle>User Details</CardTitle><CardDescription>A list of all users who have completed at least one test.</CardDescription></CardHeader>
+          <CardContent>{renderUsersContent()}</CardContent>
         </Card>
       </TabsContent>
     </Tabs>
