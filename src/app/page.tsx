@@ -31,7 +31,7 @@ export default function Home() {
         </CardContent>
       </Card>
       <footer className="mt-8 text-sm text-muted-foreground">
-        <p>Built for focus and integrity. <Link href="/admin" className="underline hover:text-primary">Admin Panel</Link></p>
+        <p>Built for focus and integrity.</p>
       </footer>
     </div>
   );
