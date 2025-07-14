@@ -20,34 +20,42 @@ async function getResult(id: string): Promise<TestResult | null> {
   }
 }
 
-async function getTest(testId: string, department: Department): Promise<Test | null> {
-  try {
-    const departmentFilePath = path.join(process.cwd(), 'public', 'data', `${department}`, 'tests.json');
-    const generalFilePath = path.join(process.cwd(), 'public', 'data', 'General', 'tests.json');
-
-    let allTests: Test[] = [];
-
+async function getAllTests(): Promise<Test[]> {
+    const allTests: Test[] = [];
+    const departmentsDir = path.join(process.cwd(), 'public', 'data');
     try {
-        const generalFile = await fs.readFile(generalFilePath, 'utf-8');
-        allTests.push(...JSON.parse(generalFile));
-    } catch {}
+        const departmentFolders = await fs.readdir(departmentsDir);
+        for (const department of departmentFolders) {
+            const departmentPath = path.join(departmentsDir, department);
+            const stats = await fs.stat(departmentPath);
+            if (!stats.isDirectory()) continue;
 
-    if (department !== 'General') {
-        try {
-            const departmentFile = await fs.readFile(departmentFilePath, 'utf-8');
-            allTests.push(...JSON.parse(departmentFile));
-        } catch {}
+            const files = await fs.readdir(departmentPath);
+            for (const file of files) {
+                if (file.endsWith('.json')) {
+                    const filePath = path.join(departmentPath, file);
+                    try {
+                        const fileContent = await fs.readFile(filePath, 'utf-8');
+                        allTests.push(JSON.parse(fileContent));
+                    } catch (readError) {
+                        console.error(`Failed to read or parse ${filePath}:`, readError);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Failed to read test directories:", error);
     }
-    
+    return allTests;
+}
+
+async function getTest(testId: string): Promise<Test | null> {
+    const allTests = await getAllTests();
     return allTests.find(t => t.id === testId) || null;
-  } catch (error) {
-    console.error(`Failed to fetch test data for testId: ${testId}`, error);
-    return null;
-  }
 }
 
 
-export default async function ResultsPage({ params, searchParams }: { params: { id: string }, searchParams: { department?: Department, firstName?: string, lastName?: string } }) {
+export default async function ResultsPage({ params, searchParams }: { params: { id: string }, searchParams: { department?: Department, firstName?: string, lastName?: string, userId?: string } }) {
   const result = await getResult(params.id);
   
   if (!result) {
@@ -71,17 +79,19 @@ export default async function ResultsPage({ params, searchParams }: { params: { 
     )
   }
 
-  const department = result.department || searchParams?.department || 'General';
-  const firstName = result.firstName || searchParams?.firstName || 'Demo';
-  const lastName = result.lastName || searchParams?.lastName || 'User';
+  const department = result.department;
+  const firstName = result.firstName;
+  const lastName = result.lastName;
+  const userId = result.userId;
 
-  const test = await getTest(result.testId, department);
+  const test = await getTest(result.testId);
   const questions = test?.questions || [];
   
   const dashboardLink = `/dashboard?${new URLSearchParams({
     department,
     firstName,
     lastName,
+    userId,
   }).toString()}`;
 
   const userName = `${firstName} ${lastName}`;

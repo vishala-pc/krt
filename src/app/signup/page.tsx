@@ -50,6 +50,7 @@ export default function SignupPage() {
         department,
         firstName,
         lastName,
+        userId: data.userId,
       });
       router.push(`/dashboard?${queryParams.toString()}`);
 

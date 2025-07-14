@@ -43,6 +43,7 @@ export default function LoginPage() {
         department: data.user.department || 'General',
         firstName: data.user.firstName,
         lastName: data.user.lastName,
+        userId: data.user.id,
       });
       router.push(`/dashboard?${queryParams.toString()}`);
 

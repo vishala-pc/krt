@@ -8,32 +8,57 @@ import type { Test, Department } from '@/lib/types';
 import { FileText, Clock, AlertCircle } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 
-// This component now fetches tests from a JSON file on the client side for simplicity
+async function fetchJsonFiles(url: string): Promise<Test[]> {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) return [];
+        // This assumes the endpoint returns a list of filenames
+        const filenames: string[] = await response.json().catch(() => []); 
+        
+        const tests = await Promise.all(filenames.map(async (filename) => {
+            if (!filename.endsWith('.json')) return null;
+            const testRes = await fetch(`${url}/${filename}`);
+            if (!testRes.ok) return null;
+            return testRes.json();
+        }));
+        return tests.filter((t): t is Test => t !== null);
+    } catch {
+        return [];
+    }
+}
+
 async function getTestsForDepartment(department: Department): Promise<Test[]> {
     try {
-        const generalRes = await fetch('/data/General/tests.json');
-        const generalTests: Test[] = await generalRes.json();
+        const generalRes = await fetch('/api/tests/list?department=General');
+        const generalFiles: string[] = await generalRes.json();
+        
+        const generalTests = await Promise.all(
+            generalFiles.map(async (file) => {
+                const res = await fetch(`/data/General/${file}`);
+                return res.json();
+            })
+        );
 
         if (department === 'General') {
             return generalTests;
         }
 
-        const departmentRes = await fetch(`/data/${encodeURIComponent(department)}/tests.json`);
+        const departmentRes = await fetch(`/api/tests/list?department=${encodeURIComponent(department)}`);
         if (!departmentRes.ok) {
-            return generalTests; // Fallback to general if department file doesn't exist
+            return generalTests;
         }
-        const departmentTests: Test[] = await departmentRes.json();
+        const departmentFiles: string[] = await departmentRes.json();
+        const departmentTests = await Promise.all(
+             departmentFiles.map(async (file) => {
+                const res = await fetch(`/data/${department}/${file}`);
+                return res.json();
+            })
+        );
         
         return [...generalTests, ...departmentTests];
     } catch (error) {
         console.error("Failed to fetch tests:", error);
-        // Attempt to fetch general tests as a fallback
-        try {
-            const res = await fetch('/data/General/tests.json');
-            return await res.json();
-        } catch {
-            return [];
-        }
+        return [];
     }
 }
 
@@ -43,6 +68,7 @@ export default function DashboardPage() {
   const userDepartment = (searchParams.get('department') as Department) || 'General';
   const firstName = searchParams.get('firstName') || 'Demo';
   const lastName = searchParams.get('lastName') || 'User';
+  const userId = searchParams.get('userId') || 'user123';
 
   const [availableTests, setAvailableTests] = useState<Test[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,6 +115,7 @@ export default function DashboardPage() {
                 department: userDepartment,
                 firstName,
                 lastName,
+                userId,
               })}`;
               return (
               <Card key={test.id} className="flex flex-col justify-between hover:shadow-lg transition-shadow">

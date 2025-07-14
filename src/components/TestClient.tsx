@@ -14,10 +14,9 @@ import { Timer, ArrowLeft, ArrowRight, ShieldAlert, CheckCircle, Loader2 } from 
 
 interface TestClientProps {
   test: Test;
-  department: Department;
 }
 
-export default function TestClient({ test, department }: TestClientProps) {
+export default function TestClient({ test }: TestClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -32,6 +31,9 @@ export default function TestClient({ test, department }: TestClientProps) {
 
   const firstName = searchParams.get('firstName') || 'Demo';
   const lastName = searchParams.get('lastName') || 'User';
+  const userId = searchParams.get('userId') || 'user123';
+  const department = (searchParams.get('department') as Department) || test.department;
+
   const userName = `${firstName} ${lastName}`;
 
   const handleSubmit = useCallback(async () => {
@@ -52,7 +54,7 @@ export default function TestClient({ test, department }: TestClientProps) {
     });
 
     const resultData: Omit<TestResult, '_id'> = {
-        userId: 'user123', // Replace with actual user ID
+        userId,
         firstName,
         lastName,
         testId: test.id,
@@ -83,7 +85,8 @@ export default function TestClient({ test, department }: TestClientProps) {
         const queryParams = new URLSearchParams({ 
             department: department,
             firstName,
-            lastName
+            lastName,
+            userId,
         });
         router.push(`/results/${id}?${queryParams.toString()}`);
 
@@ -95,7 +98,7 @@ export default function TestClient({ test, department }: TestClientProps) {
         });
         setIsSubmitting(false); // Allow user to try again
     }
-  }, [answers, isSubmitted, isSubmitting, router, test, toast, department, firstName, lastName]);
+  }, [answers, isSubmitted, isSubmitting, router, test, toast, department, firstName, lastName, userId]);
   
   const handleAutoSubmit = useCallback((reason: string) => {
     if (isSubmitted || isSubmitting) return;

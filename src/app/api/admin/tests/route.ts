@@ -1,10 +1,13 @@
-// src/app/api/admin/tests/route.ts
 'use server';
 import { NextResponse } from 'next/server';
 import type { Test, Question, Department } from '@/lib/types';
 import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+
+function sanitizeFilename(name: string) {
+  return name.replace(/[^a-z0-9\s-]/gi, '').replace(/\s+/g, '_').toLowerCase();
+}
 
 // GET all tests
 export async function GET() {
@@ -17,13 +20,20 @@ export async function GET() {
     for (const folder of departmentFolders) {
       if (folder.isDirectory()) {
         const departmentName = folder.name;
-        const testsFilePath = path.join(departmentsDir, departmentName, 'tests.json');
+        const departmentPath = path.join(departmentsDir, departmentName);
+        testsByDepartment[departmentName] = [];
+        
         try {
-          const fileContent = await fs.readFile(testsFilePath, 'utf-8');
-          testsByDepartment[departmentName] = JSON.parse(fileContent);
+            const files = await fs.readdir(departmentPath);
+            for (const file of files) {
+                if(file.endsWith('.json')) {
+                    const filePath = path.join(departmentPath, file);
+                    const fileContent = await fs.readFile(filePath, 'utf-8');
+                    testsByDepartment[departmentName].push(JSON.parse(fileContent));
+                }
+            }
         } catch (error) {
-          // File might not exist, which is fine.
-          testsByDepartment[departmentName] = [];
+             // Folder might be empty or other read error, which is fine.
         }
       }
     }
@@ -71,19 +81,10 @@ export async function POST(request: Request) {
     const departmentDir = path.join(process.cwd(), 'public', 'data', department);
     await fs.mkdir(departmentDir, { recursive: true });
 
-    const testsFilePath = path.join(departmentDir, 'tests.json');
-    let existingTests: Test[] = [];
+    const filename = `${sanitizeFilename(newTest.title)}_${newTest.id.substring(0, 8)}.json`;
+    const testsFilePath = path.join(departmentDir, filename);
 
-    try {
-      const fileContent = await fs.readFile(testsFilePath, 'utf-8');
-      existingTests = JSON.parse(fileContent);
-    } catch (error) {
-      // File doesn't exist yet, which is fine.
-    }
-
-    existingTests.push(newTest);
-
-    await fs.writeFile(testsFilePath, JSON.stringify(existingTests, null, 2));
+    await fs.writeFile(testsFilePath, JSON.stringify(newTest, null, 2));
 
     return NextResponse.json({ message: 'Test created successfully', testId: newTest.id }, { status: 201 });
 
