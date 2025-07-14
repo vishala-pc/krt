@@ -1,0 +1,30 @@
+{
+  "userId": "user123",
+  "firstName": "khusli",
+  "lastName": "aghera",
+  "testId": "e19281b9-f2dc-40b2-90ca-31d611ddb27c",
+  "testTitle": "KRT 1",
+  "department": "Python Developer",
+  "score": 2,
+  "totalPoints": 4,
+  "answers": [
+    {
+      "questionId": "074acf30-aaeb-4e57-87e0-2c2cdfc31218",
+      "selectedOption": "To reduce network load and allow client-side control"
+    },
+    {
+      "questionId": "171862e2-cd84-4976-a716-5118a060a32c",
+      "selectedOption": "Fiddler"
+    },
+    {
+      "questionId": "bbc17eaf-fd73-46b1-95b1-c39fe6a0ce0c",
+      "selectedOption": "Every request contains a unique URL parameter"
+    },
+    {
+      "questionId": "6812bb18-09a3-4b51-89e7-bfa1c53a1d2d",
+      "selectedOption": "The request must include a browser User-Agent"
+    }
+  ],
+  "submittedAt": "2025-07-13T10:21:18.878Z",
+  "_id": "6efc779a-f1c3-4fee-aa4e-3cf7905b8a73"
+}

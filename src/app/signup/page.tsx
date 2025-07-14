@@ -6,29 +6,62 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 import type { Department } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function SignupPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
     const formData = new FormData(e.currentTarget);
-    const department = formData.get('department') as Department || 'General';
     const firstName = formData.get('firstName') as string;
     const lastName = formData.get('lastName') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const department = formData.get('department') as Department || 'General';
 
-    const queryParams = new URLSearchParams({
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, password, department }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      toast({
+        title: 'Account Created',
+        description: 'You have been successfully signed up! Redirecting to dashboard...',
+      });
+
+      const queryParams = new URLSearchParams({
         department,
         firstName,
         lastName,
-    });
-    
-    router.push(`/dashboard?${queryParams.toString()}`);
+      });
+      router.push(`/dashboard?${queryParams.toString()}`);
+
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Signup Failed',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+      });
+    } finally {
+        setIsLoading(false);
+    }
   };
   
   const departments: Department[] = [
@@ -88,7 +121,9 @@ export default function SignupPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">Sign Up</Button>
+            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin" /> : 'Sign Up'}
+            </Button>
             <p className="text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link href="/login" className="underline hover:text-primary">

@@ -44,3 +44,12 @@ export interface TestResult {
   testTitle: string;
   department: Department;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  password?: string; // Storing passwords is insecure, only for demo
+  firstName: string;
+  lastName: string;
+  department: Department;
+}
