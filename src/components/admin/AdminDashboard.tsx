@@ -107,19 +107,19 @@ export default function AdminDashboard() {
   const userSummaries = useMemo<UserSummary[]>(() => {
     const userMap = new Map<string, UserSummary>();
     results.forEach(result => {
-        const userId = `${result.firstName}-${result.lastName}`.toLowerCase();
-        if (userMap.has(userId)) {
-            const existingUser = userMap.get(userId)!;
-            existingUser.testsTaken += 1;
-        } else {
-            userMap.set(userId, {
-                id: userId,
-                firstName: result.firstName,
-                lastName: result.lastName,
-                department: result.department,
-                testsTaken: 1,
-            });
-        }
+      if (!result.userId) return;
+      if (userMap.has(result.userId)) {
+        const existingUser = userMap.get(result.userId)!;
+        existingUser.testsTaken += 1;
+      } else {
+        userMap.set(result.userId, {
+            id: result.userId,
+            firstName: result.firstName,
+            lastName: result.lastName,
+            department: result.department,
+            testsTaken: 1,
+        });
+      }
     });
     return Array.from(userMap.values());
   }, [results]);
@@ -240,7 +240,18 @@ export default function AdminDashboard() {
                   <TableCell>{result.department}</TableCell>
                   <TableCell>{result.score}/{result.totalPoints}</TableCell>
                   <TableCell>{format(new Date(result.submittedAt), 'PPp')}</TableCell>
-                  <TableCell><Button asChild variant="outline" size="sm"><Link href={`/results/${result._id}?department=${result.department}&firstName=${result.firstName}&lastName=${result.lastName}`} target="_blank">View <ExternalLink className="ml-2 h-3 w-3" /></Link></Button></TableCell>
+                  <TableCell>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={`/results/${result._id}?${new URLSearchParams({
+                            department: result.department,
+                            firstName: result.firstName,
+                            lastName: result.lastName,
+                            userId: result.userId,
+                        })}`} target="_blank">
+                            View <ExternalLink className="ml-2 h-3 w-3" />
+                        </Link>
+                    </Button>
+                  </TableCell>
                   <TableCell><Button variant="destructive" size="icon" onClick={() => handleDeleteClick(result._id, 'result')}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
               ))}
@@ -258,15 +269,26 @@ export default function AdminDashboard() {
 
     return (
       <div className="space-y-6">
-        {Object.entries(allTests).map(([dept, testsInDept]) => (
-          testsInDept.length > 0 && (
+        {Object.entries(allTests).map(([dept, testsInDept]) => {
+           const seenIds = new Set();
+           const uniqueTests = testsInDept.filter(test => {
+                if (!test || !test.id) return false;
+                if (seenIds.has(test.id)) {
+                    return false;
+                } else {
+                    seenIds.add(test.id);
+                    return true;
+                }
+           });
+
+          return testsInDept.length > 0 && (
             <div key={dept}>
               <h3 className="text-lg font-semibold mb-2">{dept}</h3>
               <div className="border rounded-lg">
                 <Table>
                   <TableHeader><TableRow><TableHead>Test Title</TableHead><TableHead>Questions</TableHead><TableHead>Time Limit</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {testsInDept.map(test => (
+                    {uniqueTests.map(test => (
                       <TableRow key={test.id}>
                         <TableCell className="font-medium">{test.title}</TableCell>
                         <TableCell>{test.questions?.length ?? 0}</TableCell>
@@ -279,7 +301,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           )
-        ))}
+        })}
       </div>
     );
   };
