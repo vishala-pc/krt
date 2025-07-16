@@ -7,7 +7,7 @@ export default function Header({ isAdmin = false }: { isAdmin?: boolean }) {
     <header className="bg-card border-b sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2">
-           <ActowizLogo className="h-8" />
+           <ActowizLogo className="h-8 w-32" />
           <span className="font-bold text-xl font-headline text-primary">KRT {isAdmin && <span className="text-sm font-normal text-muted-foreground">Admin</span>}</span>
         </Link>
         <nav className="flex items-center gap-4">

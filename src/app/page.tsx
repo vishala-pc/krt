@@ -8,7 +8,7 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <ActowizLogo className="h-12 mx-auto" />
+          <ActowizLogo className="h-12 w-48 mx-auto" />
           <CardTitle className="text-4xl font-headline font-bold text-primary pt-2">Actowiz KRT</CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
             Your Knowledge Retention Testing Platform
