@@ -269,7 +269,7 @@ export default function AdminDashboard() {
                     {testsInDept.map(test => (
                       <TableRow key={test.id}>
                         <TableCell className="font-medium">{test.title}</TableCell>
-                        <TableCell>{test.questions.length}</TableCell>
+                        <TableCell>{test.questions?.length ?? 0}</TableCell>
                         <TableCell>{test.timeLimit} min</TableCell>
                         <TableCell><Button variant="destructive" size="icon" onClick={() => handleDeleteClick(test.id, 'test')}><Trash2 className="h-4 w-4" /></Button></TableCell>
                       </TableRow>
