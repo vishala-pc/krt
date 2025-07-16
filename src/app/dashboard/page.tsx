@@ -127,7 +127,7 @@ export default function DashboardPage() {
                   <div className="flex items-center text-sm text-muted-foreground gap-4">
                     <div className="flex items-center gap-1.5">
                       <FileText className="w-4 h-4" />
-                      <span>{test.questions.length} Questions</span>
+                      <span>{test.questions?.length ?? 0} Questions</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-4 h-4" />

@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "f74d4db5-0698-4cb4-8f97-d45227a5cce6",
+    "email": "vishala.actowiz@gmail.com",
+    "password": "Act@123",
+    "firstName": "vishal",
+    "lastName": "aghera",
+    "department": "Python Developer"
+  }
+]
