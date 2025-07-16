@@ -11,8 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { TestResult, Department, Question, Test } from '@/lib/types';
-import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, Trash2, FileCog, Users, FileUp } from 'lucide-react';
+import { Upload, ListOrdered, Loader2, AlertCircle, Search, PlusCircle, Trash2, FileCog, Users, FileUp, Eye } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import * as XLSX from 'xlsx';
+import ResultDetails from './ResultDetails';
 
 interface UserSummary {
   id: string;
@@ -42,28 +51,26 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // State for deletion confirmation
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'result' | 'test'} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // State for the new test form (manual)
   const [testTitle, setTestTitle] = useState('');
   const [timeLimit, setTimeLimit] = useState('');
   const [department, setDepartment] = useState<Department | ''>('');
   const [questions, setQuestions] = useState<Omit<Question, 'id'>[]>([]);
 
-  // State for the current question being added
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [options, setOptions] = useState(['', '', '', '']);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [points, setPoints] = useState('');
 
-  // State for CSV upload
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvTestTitle, setCsvTestTitle] = useState('');
   const [csvTimeLimit, setCsvTimeLimit] = useState('');
   const [csvDepartment, setCsvDepartment] = useState<Department | ''>('');
+
+  const [selectedResult, setSelectedResult] = useState<TestResult | null>(null);
   
   const departments: Department[] = [
     'Python Developer', 'R&D', 'Sales', 'Marketing', 'Project Coordinators', 'QA', 'Delivery Manager', 'IT', 'General'
@@ -287,12 +294,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const allTestsFlat = useMemo(() => Object.values(allTests).flat(), [allTests]);
+
   const renderResultsContent = () => {
     if (isLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="mr-2 h-8 w-8 animate-spin" /><span>Loading results...</span></div>;
     if (error) return <div className="flex flex-col items-center justify-center p-8 text-destructive"><AlertCircle className="h-8 w-8 mb-2" /><p>Error loading data: {error}</p></div>;
     if (results.length === 0) return <div className="flex flex-col items-center justify-center p-8 text-muted-foreground"><ListOrdered className="h-8 w-8 mb-2" /><p>No test results have been submitted yet.</p></div>;
+    
     return (
-      <>
+      <Dialog onOpenChange={(isOpen) => !isOpen && setSelectedResult(null)}>
         <div className="relative mb-4">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input type="search" placeholder="Search by user, test title, or department..." className="w-full rounded-lg bg-background pl-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -309,16 +319,11 @@ export default function AdminDashboard() {
                   <TableCell>{result.score}/{result.totalPoints}</TableCell>
                   <TableCell>{format(new Date(result.submittedAt), 'PPp')}</TableCell>
                   <TableCell>
-                    <Button asChild variant="outline" size="sm">
-                        <Link href={`/results/${result._id}?${new URLSearchParams({
-                            department: result.department,
-                            firstName: result.firstName,
-                            lastName: result.lastName,
-                            userId: result.userId,
-                        })}`} target="_blank">
-                            View <ExternalLink className="ml-2 h-3 w-3" />
-                        </Link>
-                    </Button>
+                     <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" onClick={() => setSelectedResult(result)}>
+                            View <Eye className="ml-2 h-3 w-3" />
+                        </Button>
+                    </DialogTrigger>
                   </TableCell>
                   <TableCell><Button variant="destructive" size="icon" onClick={() => handleDeleteClick(result._id, 'result')}><Trash2 className="h-4 w-4" /></Button></TableCell>
                 </TableRow>
@@ -326,7 +331,18 @@ export default function AdminDashboard() {
             </TableBody>
           </Table>
         </div>
-      </>
+        {selectedResult && (
+           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Test Result Details</DialogTitle>
+                    <DialogDescription>
+                        Showing results for {selectedResult.testTitle} submitted by {selectedResult.firstName} {selectedResult.lastName}.
+                    </DialogDescription>
+                </DialogHeader>
+                <ResultDetails result={selectedResult} test={allTestsFlat.find(t => t.id === selectedResult.testId) || null} />
+            </DialogContent>
+        )}
+      </Dialog>
     );
   }
 
