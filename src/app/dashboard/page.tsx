@@ -82,6 +82,19 @@ export default function DashboardPage() {
     }
     loadTests();
   }, [userDepartment]);
+  
+  const uniqueTests = useMemo(() => {
+    const seenIds = new Set();
+    return availableTests.filter(test => {
+      if (!test || !test.id) return false;
+      if (seenIds.has(test.id)) {
+        return false;
+      } else {
+        seenIds.add(test.id);
+        return true;
+      }
+    });
+  }, [availableTests]);
 
 
   if (isLoading) {
@@ -108,9 +121,9 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold mb-1 font-headline">Available Tests</h1>
         <p className="text-muted-foreground mb-6">Showing tests for the <strong>{userDepartment}</strong> department.</p>
 
-        {availableTests.length > 0 ? (
+        {uniqueTests.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {availableTests.map((test) => {
+            {uniqueTests.map((test) => {
               const testLink = `/test/${test.id}?${new URLSearchParams({
                 department: userDepartment,
                 firstName,
