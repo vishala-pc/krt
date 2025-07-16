@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock } from 'lucide-react';
+import ActowizLogo from '@/components/ActowizLogo';
 
 export default function Home() {
   return (
@@ -9,9 +9,9 @@ export default function Home() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center items-center mb-4">
-            <Lock className="w-12 h-12 text-primary" />
+            <ActowizLogo className="w-48 h-auto" />
           </div>
-          <CardTitle className="text-4xl font-headline font-bold text-primary">ExamLock</CardTitle>
+          <CardTitle className="text-4xl font-headline font-bold text-primary pt-2">ExamLock</CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
             Your Secure Online Testing Environment
           </CardDescription>

@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import ActowizLogo from '@/components/ActowizLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,8 +64,8 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
-            <div className="flex justify-center items-center mb-2">
-              <Lock className="w-8 h-8 text-primary" />
+            <div className="flex justify-center items-center mb-4">
+               <ActowizLogo className="w-40 h-auto" />
             </div>
             <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
             <CardDescription>Enter your credentials to access your account.</CardDescription>
