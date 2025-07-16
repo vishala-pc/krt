@@ -4,28 +4,11 @@ import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/Header';
-import type { Test, Department } from '@/lib/types';
-import { FileText, Clock, AlertCircle } from 'lucide-react';
+import type { Test, Department, TestResult } from '@/lib/types';
+import { FileText, Clock, AlertCircle, Award, Calendar, CheckCircle } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
+import { format } from 'date-fns';
 
-async function fetchJsonFiles(url: string): Promise<Test[]> {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) return [];
-        // This assumes the endpoint returns a list of filenames
-        const filenames: string[] = await response.json().catch(() => []); 
-        
-        const tests = await Promise.all(filenames.map(async (filename) => {
-            if (!filename.endsWith('.json')) return null;
-            const testRes = await fetch(`${url}/${filename}`);
-            if (!testRes.ok) return null;
-            return testRes.json();
-        }));
-        return tests.filter((t): t is Test => t !== null);
-    } catch {
-        return [];
-    }
-}
 
 async function getTestsForDepartment(department: Department): Promise<Test[]> {
     try {
@@ -62,6 +45,19 @@ async function getTestsForDepartment(department: Department): Promise<Test[]> {
     }
 }
 
+async function getUserResults(userId: string): Promise<TestResult[]> {
+    if (!userId) return [];
+    try {
+        const response = await fetch(`/api/results/${userId}`);
+        if (!response.ok) return [];
+        const results = await response.json();
+        return Array.isArray(results) ? results : [];
+    } catch (error) {
+        console.error("Failed to fetch user results:", error);
+        return [];
+    }
+}
+
 
 export default function DashboardPage() {
   const searchParams = useSearchParams();
@@ -71,17 +67,24 @@ export default function DashboardPage() {
   const userId = searchParams.get('userId') || 'user123';
 
   const [availableTests, setAvailableTests] = useState<Test[]>([]);
+  const [userResults, setUserResults] = useState<TestResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadTests() {
+    async function loadData() {
       setIsLoading(true);
-      const tests = await getTestsForDepartment(userDepartment);
+      const [tests, results] = await Promise.all([
+          getTestsForDepartment(userDepartment),
+          getUserResults(userId)
+      ]);
       setAvailableTests(tests);
+      setUserResults(results);
       setIsLoading(false);
     }
-    loadTests();
-  }, [userDepartment]);
+    if (userId) {
+        loadData();
+    }
+  }, [userDepartment, userId]);
   
   const uniqueTests = useMemo(() => {
     const seenIds = new Set();
@@ -95,6 +98,13 @@ export default function DashboardPage() {
       }
     });
   }, [availableTests]);
+
+  const testsWithResults = useMemo(() => {
+    return uniqueTests.map(test => {
+      const result = userResults.find(r => r.testId === test.id);
+      return { ...test, result };
+    });
+  }, [uniqueTests, userResults]);
 
 
   if (isLoading) {
@@ -121,15 +131,24 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold mb-1 font-headline">Available Tests</h1>
         <p className="text-muted-foreground mb-6">Showing tests for the <strong>{userDepartment}</strong> department.</p>
 
-        {uniqueTests.length > 0 ? (
+        {testsWithResults.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {uniqueTests.map((test) => {
+            {testsWithResults.map((test) => {
               const testLink = `/test/${test.id}?${new URLSearchParams({
                 department: userDepartment,
                 firstName,
                 lastName,
                 userId,
               })}`;
+
+              const percentage = test.result ? Math.round((test.result.score / test.result.totalPoints) * 100) : 0;
+              const resultLink = test.result ? `/results/${test.result._id}?${new URLSearchParams({
+                  department: userDepartment,
+                  firstName,
+                  lastName,
+                  userId,
+              })}` : '#';
+
               return (
               <Card key={test.id} className="flex flex-col justify-between hover:shadow-lg transition-shadow">
                 <CardHeader>
@@ -147,11 +166,33 @@ export default function DashboardPage() {
                       <span>{test.timeLimit} Minutes</span>
                     </div>
                   </div>
+                   {test.result && (
+                     <div className="mt-4 border-t pt-4 space-y-3 text-sm">
+                        <div className="flex items-center gap-2 text-green-600 font-semibold">
+                            <CheckCircle className="w-5 h-5" />
+                            <span>Test Completed</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            <span>{format(new Date(test.result.submittedAt), 'PP')}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <Award className="w-4 h-4" />
+                            <span>Score: {test.result.score}/{test.result.totalPoints} ({percentage}%)</span>
+                        </div>
+                     </div>
+                   )}
                 </CardContent>
                 <CardFooter>
-                  <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                    <Link href={testLink}>Start Test</Link>
-                  </Button>
+                  {test.result ? (
+                     <Button asChild className="w-full" variant="outline">
+                        <Link href={resultLink}>View Result</Link>
+                    </Button>
+                  ) : (
+                    <Button asChild className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                        <Link href={testLink}>Start Test</Link>
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             )})}

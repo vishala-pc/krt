@@ -1,12 +1,12 @@
 {
-  "id": "42dd6177-a4d0-40aa-b6f7-a3f19097449d",
+  "id": "1ccc83df-35e7-483e-9fbd-51c5140dee3a",
   "title": "PYTHON BASICS 20250716",
   "description": "A new test for Project Coordinators.",
-  "timeLimit": 30,
+  "timeLimit": 5,
   "department": "Project Coordinators",
   "questions": [
     {
-      "id": "2a2af3aa-069b-4705-9099-f549d36867ad",
+      "id": "22e222c0-ccfa-42a5-87bd-7905a588340e",
       "question": "What is the correct file extension for Python files?",
       "options": [
         ".pt",
@@ -14,11 +14,11 @@
         ".py",
         ".python"
       ],
-      "correctAnswer": "C",
+      "correctAnswer": ".py",
       "points": 1
     },
     {
-      "id": "6a3a5f0b-a71a-42a2-9a9b-23006b4a86ce",
+      "id": "83e29f8a-8193-4587-a841-b0f1fc84797c",
       "question": "How do you write a comment in Python?",
       "options": [
         "<!-- This is a comment -->",
@@ -26,11 +26,11 @@
         "# This is a comment",
         "** This is a comment"
       ],
-      "correctAnswer": "C",
+      "correctAnswer": "# This is a comment",
       "points": 1
     },
     {
-      "id": "9d3c0bbd-463e-482b-80c4-6d548604f696",
+      "id": "92182dc1-8a4c-43c1-9f66-f0b4c08b74ef",
       "question": "What will this code print? print(3 + 2)",
       "options": [
         "32",
@@ -38,11 +38,11 @@
         "3 + 2",
         "Error"
       ],
-      "correctAnswer": "B",
+      "correctAnswer": "5",
       "points": 1
     },
     {
-      "id": "a1b0a800-ebc7-4887-8df4-fb980b7b6e1b",
+      "id": "3d8da422-0ab3-460f-bad5-ae45e8b6667c",
       "question": "Which of the following is a valid variable name in Python?",
       "options": [
         "1name",
@@ -50,11 +50,11 @@
         "name-1",
         "$name"
       ],
-      "correctAnswer": "B",
+      "correctAnswer": "name_1",
       "points": 1
     },
     {
-      "id": "0abe8ec9-e6a6-4dc8-a135-fe963c51d945",
+      "id": "122d2898-63f1-4e88-88e5-e0e3f2d9b3e6",
       "question": "How do you create a list in Python?",
       "options": [
         "list = (1, 2, 3)",
@@ -62,7 +62,7 @@
         "list = {1, 2, 3}",
         "list = <1, 2, 3>"
       ],
-      "correctAnswer": "B",
+      "correctAnswer": "list = [1, 2, 3]",
       "points": 1
     }
   ]
