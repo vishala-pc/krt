@@ -6,8 +6,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'ExamLock',
-  description: 'Online Knowledge Retention Testing Platform',
+  title: 'Actowiz KRT',
+  description: 'Actowiz Knowledge Retention Testing Platform',
 };
 
 export default function RootLayout({

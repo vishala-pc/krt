@@ -87,7 +87,7 @@ export default function SignupPage() {
                <ActowizLogo className="w-40 h-auto" />
             </div>
             <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-            <CardDescription>Join ExamLock to start your assessments.</CardDescription>
+            <CardDescription>Join Actowiz KRT to start your assessments.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
              <div className="grid grid-cols-2 gap-4">

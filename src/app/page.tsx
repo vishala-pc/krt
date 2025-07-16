@@ -11,9 +11,9 @@ export default function Home() {
           <div className="flex justify-center items-center mb-4">
             <ActowizLogo className="w-48 h-auto" />
           </div>
-          <CardTitle className="text-4xl font-headline font-bold text-primary pt-2">ExamLock</CardTitle>
+          <CardTitle className="text-4xl font-headline font-bold text-primary pt-2">Actowiz KRT</CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
-            Your Secure Online Testing Environment
+            Your Knowledge Retention Testing Platform
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
