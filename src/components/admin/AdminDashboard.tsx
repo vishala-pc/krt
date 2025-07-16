@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { TestResult, Department, Question, Test } from '@/lib/types';
-import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, Trash2, FileCog, Users } from 'lucide-react';
+import { Upload, ListOrdered, Loader2, AlertCircle, ExternalLink, Search, PlusCircle, Trash2, FileCog, Users, FileUp } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import * as XLSX from 'xlsx';
 
 interface UserSummary {
   id: string;
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'result' | 'test'} | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // State for the new test form
+  // State for the new test form (manual)
   const [testTitle, setTestTitle] = useState('');
   const [timeLimit, setTimeLimit] = useState('');
   const [department, setDepartment] = useState<Department | ''>('');
@@ -57,17 +58,15 @@ export default function AdminDashboard() {
   const [options, setOptions] = useState(['', '', '', '']);
   const [correctAnswer, setCorrectAnswer] = useState('');
   const [points, setPoints] = useState('');
+
+  // State for CSV upload
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvTestTitle, setCsvTestTitle] = useState('');
+  const [csvTimeLimit, setCsvTimeLimit] = useState('');
+  const [csvDepartment, setCsvDepartment] = useState<Department | ''>('');
   
   const departments: Department[] = [
-    'Python Developer',
-    'R&D',
-    'Sales',
-    'Marketing',
-    'Project Coordinators',
-    'QA',
-    'Delivery Manager',
-    'IT',
-    'General'
+    'Python Developer', 'R&D', 'Sales', 'Marketing', 'Project Coordinators', 'QA', 'Delivery Manager', 'IT', 'General'
   ];
 
   async function fetchResults() {
@@ -163,26 +162,95 @@ export default function AdminDashboard() {
     setQuestions(questions.filter((_, i) => i !== index));
   };
 
-  const handleCreateTest = async (e: React.FormEvent) => {
+  const createTest = async (testData: { title: string, timeLimit: number, department: Department, questions: Omit<Question, 'id'>[] }) => {
+    setIsUploading(true);
+    try {
+      const response = await fetch('/api/admin/tests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testData) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to create test.');
+      toast({ title: 'Test Created Successfully', description: `Test "${testData.title}" has been created.` });
+      await fetchTests();
+      return true;
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Creation Failed', description: error instanceof Error ? error.message : 'An unknown error occurred.' });
+      return false;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCreateTestManually = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!testTitle || !timeLimit || !department || questions.length === 0) {
       toast({ variant: 'destructive', title: 'Incomplete Test', description: 'Please provide a title, time limit, department, and at least one question.' });
       return;
     }
-    setIsUploading(true);
-    const testData = { title: testTitle, timeLimit: Number(timeLimit), department, questions };
-    try {
-      const response = await fetch('/api/admin/tests', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(testData) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Failed to create test.');
-      toast({ title: 'Test Created Successfully', description: `Test "${testTitle}" has been created.` });
+    const success = await createTest({ title: testTitle, timeLimit: Number(timeLimit), department, questions });
+    if (success) {
       setTestTitle(''); setTimeLimit(''); setDepartment(''); setQuestions([]);
-      await fetchTests(); // Refresh the list of tests
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Creation Failed', description: error instanceof Error ? error.message : 'An unknown error occurred.' });
-    } finally {
-      setIsUploading(false);
     }
+  };
+
+  const handleCreateTestFromCSV = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!csvTestTitle || !csvTimeLimit || !csvDepartment || !csvFile) {
+        toast({ variant: 'destructive', title: 'Incomplete Form', description: 'Please provide a title, time limit, department, and a CSV file.' });
+        return;
+    }
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        try {
+            const data = new Uint8Array(event.target?.result as ArrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json: any[] = XLSX.utils.sheet_to_json(worksheet);
+
+            const csvQuestions: Omit<Question, 'id'>[] = json.map(row => {
+                const { Questions, A, B, C, D, Answer, point } = row;
+                if (!Questions || !A || !B || !C || !D || !Answer || point === undefined) {
+                    throw new Error('CSV file has missing columns. Required: Questions, A, B, C, D, Answer, point');
+                }
+                return {
+                    question: String(Questions),
+                    options: [String(A), String(B), String(C), String(D)],
+                    correctAnswer: String(Answer),
+                    points: Number(point)
+                };
+            });
+            
+            if (csvQuestions.length === 0) {
+                throw new Error("CSV file doesn't contain any questions.");
+            }
+
+            const success = await createTest({
+                title: csvTestTitle,
+                timeLimit: Number(csvTimeLimit),
+                department: csvDepartment,
+                questions: csvQuestions
+            });
+
+            if (success) {
+                setCsvTestTitle('');
+                setCsvTimeLimit('');
+                setCsvDepartment('');
+                setCsvFile(null);
+                const fileInput = document.getElementById('csv-file-input') as HTMLInputElement;
+                if (fileInput) fileInput.value = '';
+            }
+
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'CSV Processing Failed', description: error instanceof Error ? error.message : 'An unknown error occurred.' });
+            setIsUploading(false);
+        }
+    };
+    reader.onerror = () => {
+        toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
+        setIsUploading(false);
+    };
+    reader.readAsArrayBuffer(csvFile);
   };
   
   const handleDeleteClick = (id: string, type: 'result' | 'test') => {
@@ -281,7 +349,7 @@ export default function AdminDashboard() {
                 }
            });
 
-          return testsInDept.length > 0 && (
+          return uniqueTests.length > 0 && (
             <div key={dept}>
               <h3 className="text-lg font-semibold mb-2">{dept}</h3>
               <div className="border rounded-lg">
@@ -339,9 +407,10 @@ export default function AdminDashboard() {
   return (
     <>
     <Tabs defaultValue="results" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="results"><ListOrdered className="mr-2" /> View Results</TabsTrigger>
-        <TabsTrigger value="create"><Upload className="mr-2" /> Create Test</TabsTrigger>
+        <TabsTrigger value="create-csv"><FileUp className="mr-2" /> Create from CSV</TabsTrigger>
+        <TabsTrigger value="create-manual"><PlusCircle className="mr-2" /> Create Manually</TabsTrigger>
         <TabsTrigger value="manage"><FileCog className="mr-2" /> Manage Tests</TabsTrigger>
         <TabsTrigger value="users"><Users className="mr-2" /> Users</TabsTrigger>
       </TabsList>
@@ -351,11 +420,32 @@ export default function AdminDashboard() {
           <CardContent>{renderResultsContent()}</CardContent>
         </Card>
       </TabsContent>
-      <TabsContent value="create">
+       <TabsContent value="create-csv">
         <Card>
-          <CardHeader><CardTitle>Create New Test</CardTitle><CardDescription>Build a new test by providing its details and adding questions one by one.</CardDescription></CardHeader>
+          <CardHeader>
+            <CardTitle>Create Test from CSV</CardTitle>
+            <CardDescription>
+              Upload a CSV file to quickly generate a new test. The file must have columns: Questions,A,B,C,D,Answer,point
+            </CardDescription>
+          </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateTest} className="space-y-8">
+            <form onSubmit={handleCreateTestFromCSV} className="space-y-6">
+              <div className="space-y-2"><Label htmlFor="csv-title">Test Title</Label><Input id="csv-title" value={csvTestTitle} onChange={e => setCsvTestTitle(e.target.value)} placeholder="e.g., Advanced Python Quiz" required /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2"><Label htmlFor="csv-timeLimit">Time Limit (minutes)</Label><Input id="csv-timeLimit" value={csvTimeLimit} onChange={e => setCsvTimeLimit(e.target.value)} type="number" placeholder="e.g., 60" required /></div>
+                <div className="space-y-2"><Label htmlFor="csv-department">Department</Label><Select name="csv-department" required value={csvDepartment} onValueChange={(value) => setCsvDepartment(value as Department)}><SelectTrigger id="csv-department"><SelectValue placeholder="Assign to a department" /></SelectTrigger><SelectContent>{departments.map((dept) => (<SelectItem key={dept} value={dept}>{dept}</SelectItem>))}</SelectContent></Select></div>
+              </div>
+              <div className="space-y-2"><Label htmlFor="csv-file">CSV File</Label><Input id="csv-file-input" type="file" accept=".csv" onChange={(e) => setCsvFile(e.target.files ? e.target.files[0] : null)} required /></div>
+              <Button type="submit" disabled={isUploading} className="bg-accent text-accent-foreground hover:bg-accent/90 w-full text-base">{isUploading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating Test...</>) : (<><Upload className="mr-2" /> Upload & Create Test</>)}</Button>
+            </form>
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="create-manual">
+        <Card>
+          <CardHeader><CardTitle>Create New Test Manually</CardTitle><CardDescription>Build a new test by providing its details and adding questions one by one.</CardDescription></CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreateTestManually} className="space-y-8">
               <div className="space-y-4 p-4 border rounded-lg">
                 <h3 className="text-lg font-medium">Test Details</h3>
                 <div className="space-y-2"><Label htmlFor="title">Test Title</Label><Input id="title" value={testTitle} onChange={e => setTestTitle(e.target.value)} type="text" placeholder="e.g., General Knowledge Quiz" required /></div>
