@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import ActowizLogo from '@/components/ActowizLogo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,6 +64,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <form onSubmit={handleLogin}>
           <CardHeader className="text-center">
+            <ActowizLogo className="h-10 mx-auto mb-4" />
             <CardTitle className="text-2xl font-headline pt-2">Welcome Back</CardTitle>
             <CardDescription>Enter your credentials to access your account.</CardDescription>
           </CardHeader>

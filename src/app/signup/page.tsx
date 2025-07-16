@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useState } from 'react';
 import type { Department } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import ActowizLogo from '@/components/ActowizLogo';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -81,6 +82,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <form onSubmit={handleSignup}>
           <CardHeader className="text-center">
+            <ActowizLogo className="h-10 mx-auto mb-4" />
             <CardTitle className="text-2xl font-headline pt-2">Create an Account</CardTitle>
             <CardDescription>Join Actowiz KRT to start your assessments.</CardDescription>
           </CardHeader>
